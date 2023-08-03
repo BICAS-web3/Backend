@@ -1,0 +1,29 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+warp = "0.3"
+jwt = "0.16"
+hmac = "0.12.1"
+sha2 = "0.10.2"
+serde = "1.0"
+serde_json = "1.0"
+sqlx = { version = "0.6.0", features = [
+	"postgres",
+	"runtime-tokio-rustls",
+	"chrono",
+	"offline",
+	"macros"
+] }
+tracing = "0.1.37"
+tracing-appender = "0.2.2"
+tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+thiserror = "1.0.44"
+chrono = {version = "0.4.26", features = ["serde"]}
+dotenvy = "0.15.7"
+lazy_static = "1.4.0"

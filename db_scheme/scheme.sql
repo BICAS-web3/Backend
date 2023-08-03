@@ -1,0 +1,131 @@
+DROP TABLE IF EXISTS NativeCurrency CASCADE;
+DROP TABLE IF EXISTS Network CASCADE;
+DROP TABLE IF EXISTS RpcUrl CASCADE;
+DROP TABLE IF EXISTS BlockExplorerUrl CASCADE;
+DROP TABLE IF EXISTS Token CASCADE;
+DROP TABLE IF EXISTS Game CASCADE;
+DROP TABLE IF EXISTS Nickname CASCADE;
+DROP TABLE IF EXISTS Player CASCADE;
+DROP TABLE IF EXISTS Bet CASCADE;
+
+
+CREATE TABLE IF NOT EXISTS NativeCurrency(
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    symbol TEXT NOT NULL,
+    decimals BIGINT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS Network(
+    id BIGINT PRIMARY KEY,
+    name TEXT NOT NULL,
+    native_currency_id BIGSERIAL NOT NULL,
+
+    CONSTRAINT fk_nativecurrency
+        FOREIGN KEY(native_currency_id)
+            REFERENCES NativeCurrency(id)
+);
+
+CREATE VIEW NetworkInfo AS
+    SELECT network.id as network_id,
+            network.name as network_name,
+            nativecurrency.name as currency_name,
+            nativecurrency.symbol as currency_symbol,
+            nativecurrency.decimals
+        FROM Network 
+    INNER JOIN NativeCurrency 
+        ON Network.native_currency_id = NativeCurrency.id;
+
+CREATE TABLE IF NOT EXISTS RpcUrl(
+    id BIGSERIAL PRIMARY KEY,
+    network_id BIGSERIAL NOT NULL,
+    url TEXT NOT NULL,
+
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
+);
+
+CREATE TABLE IF NOT EXISTS BlockExplorerUrl(
+    id BIGSERIAL PRIMARY KEY,
+    network_id BIGSERIAL NOT NULL,
+    url TEXT NOT NULL,
+
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
+);
+
+CREATE TABLE IF NOT EXISTS Token(
+    id BIGSERIAL PRIMARY KEY,
+    network_id BIGSERIAL NOT NULL,
+    name TEXT NOT NULL,
+    icon TEXT NOT NULL,
+    contract_address character(42) NOT NULL,
+
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
+);
+
+CREATE TABLE IF NOT EXISTS Game(
+    id BIGSERIAL PRIMARY KEY,
+    network_id BIGSERIAL NOT NULL,
+    name TEXT NOT NULL,
+    address character(42) NOT NULL,
+
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
+);
+
+CREATE UNIQUE INDEX game_idx ON Game(network_id, name);
+
+CREATE TABLE IF NOT EXISTS Nickname(
+    id BIGSERIAL PRIMARY KEY,
+    address character(42) NOT NULL,
+    nickname varchar(20) NOT NULL
+);
+
+CREATE UNIQUE INDEX nickname_idx ON Nickname(address);
+
+CREATE TABLE IF NOT EXISTS Player(
+    id BIGSERIAL PRIMARY KEY,
+    address character(42) NOT NULL,
+    wagered DOUBLE PRECISION NOT NULL,
+    bets BIGINT NOT NULL,
+    bets_won BIGINT NOT NULL,
+    bets_lost BIGINT NOT NULL,
+    highest_win DOUBLE PRECISION NOT NULL,
+    highest_multiplier DOUBLE PRECISION NOT NULL
+);
+
+CREATE UNIQUE INDEX player_idx ON Player(address);
+
+CREATE TABLE IF NOT EXISTS Bet(
+    id BIGSERIAL PRIMARY KEY,
+    player character(42) NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
+    game_id BIGINT NOT NULL,
+    wager BIGINT NOT NULL,
+    token_id BIGINT NOT NULL,
+    bets BIGINT NOT NULL,
+    multiplier DOUBLE PRECISION NOT NULL,
+    profit DOUBLE PRECISION NOT NULL,
+
+    CONSTRAINT fk_player
+        FOREIGN KEY(player)
+            REFERENCES Player(address),
+
+    CONSTRAINT fk_game
+        FOREIGN KEY(game_id)
+            REFERENCES Game(id),
+
+    CONSTRAINT fk_token
+        FOREIGN KEY(token_id)
+            REFERENCES Token(id)
+);
+
+CREATE INDEX bet_player_idx ON Bet(player);
+CREATE INDEX bet_game_idx ON Bet(game_id);
+CREATE INDEX bet_idx ON Bet(player, game_id);
