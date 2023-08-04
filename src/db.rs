@@ -97,6 +97,7 @@ impl DB {
             FROM Game
             WHERE name = $1 
                 AND network_id = $2
+            LIMIT 1
             ",
             game_name,
             network_id
