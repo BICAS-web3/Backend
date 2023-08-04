@@ -88,7 +88,7 @@ impl DB {
     pub async fn query_game(
         &self,
         network_id: i64,
-        game_name: String,
+        game_name: &str,
     ) -> Result<Option<Game>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Game,
@@ -106,13 +106,14 @@ impl DB {
         .await
     }
 
-    pub async fn query_nickname(&self, address: String) -> Result<Option<Nickname>, sqlx::Error> {
+    pub async fn query_nickname(&self, address: &str) -> Result<Option<Nickname>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Nickname,
             "
             SELECT *
             FROM Nickname
             WHERE address = $1
+            LIMIT 1
             ",
             address
         )
@@ -120,7 +121,7 @@ impl DB {
         .await
     }
 
-    pub async fn query_player(&self, address: String) -> Result<Option<Player>, sqlx::Error> {
+    pub async fn query_player(&self, address: &str) -> Result<Option<Player>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Player,
             "
@@ -136,7 +137,7 @@ impl DB {
 
     pub async fn query_bets_for_address(
         &self,
-        player_address: String,
+        player_address: &str,
         last_id: Option<i64>,
         page_size: i64,
     ) -> Result<Vec<Bet>, sqlx::Error> {
