@@ -16,6 +16,7 @@ mod filters;
 mod handlers;
 mod models;
 mod rejection_handler;
+mod tools;
 
 #[tokio::main]
 async fn main() {

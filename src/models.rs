@@ -70,7 +70,7 @@ pub mod db_models {
         pub nickname: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, Default)]
     pub struct Player {
         pub id: i64,
         /// 42 symbols
@@ -112,7 +112,9 @@ pub mod db_models {
 
 pub mod json_responses {
 
-    use super::db_models::{BlockExplorerUrl, NetworkInfo, RpcUrl, Token};
+    use super::db_models::{
+        Bet, BlockExplorerUrl, Game, NetworkInfo, Nickname, Player, RpcUrl, Token,
+    };
     use super::*;
 
     #[derive(Serialize, Deserialize)]
@@ -146,6 +148,10 @@ pub mod json_responses {
         Rpcs(Rpcs),
         BlockExplorers(BlockExplorers),
         Tokens(Tokens),
+        Game(Game),
+        Nickname(Nickname),
+        Player(Player),
+        Bets(Bets),
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -176,5 +182,21 @@ pub mod json_responses {
     #[derive(Deserialize, Serialize)]
     pub struct Tokens {
         pub tokens: Vec<Token>,
+    }
+
+    #[derive(Deserialize, Serialize)]
+    pub struct Bets {
+        pub bets: Vec<Bet>,
+    }
+}
+
+pub mod json_requests {
+    use super::*;
+
+    #[derive(Deserialize, Serialize)]
+    pub struct SetNickname {
+        pub address: String,
+        pub nickname: String,
+        pub signature: String,
     }
 }

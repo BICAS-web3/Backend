@@ -15,6 +15,9 @@ lazy_static! {
     // server config
     pub static ref SERVER_HOST: String = env::var("SERVER_HOST").unwrap();
     pub static ref SERVER_PORT: String = env::var("SERVER_PORT").unwrap();
+
+    // other params
+    pub static ref PAGE_SIZE: i64 = env::var("PAGE_SIZE").unwrap().parse().unwrap();
 }
 
 #[derive(Debug, Deserialize)]

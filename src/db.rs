@@ -121,6 +121,23 @@ impl DB {
         .await
     }
 
+    pub async fn set_nickname(&self, address: &str, nickname: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "
+            INSERT INTO Nickname(address, nickname)
+            VALUES ($1, $2)
+            ON CONFLICT(address) DO UPDATE
+                SET nickname = excluded.nickname
+            ",
+            address,
+            nickname,
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
     pub async fn query_player(&self, address: &str) -> Result<Option<Player>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Player,
@@ -128,6 +145,7 @@ impl DB {
             SELECT *
             FROM Player
             WHERE address = $1
+            LIMIT 1
             ",
             address
         )
@@ -149,6 +167,7 @@ impl DB {
                 SELECT *
                 FROM Bet
                 WHERE player = $1
+                ORDER BY timestamp DESC
                 LIMIT $2
                 ",
                     player_address,
@@ -163,7 +182,8 @@ impl DB {
                     "
                 SELECT *
                 FROM Bet
-                WHERE id > $1 AND player = $2
+                WHERE id < $1 AND player = $2
+                ORDER BY timestamp DESC
                 LIMIT $3
                 ",
                     last_id,
