@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, net::Ipv4Addr};
 
 use lazy_static::lazy_static;
 use serde::Deserialize;
@@ -13,8 +13,8 @@ lazy_static! {
     pub static ref DB_NAME: String = env::var("DB_NAME").unwrap();
 
     // server config
-    pub static ref SERVER_HOST: String = env::var("SERVER_HOST").unwrap();
-    pub static ref SERVER_PORT: String = env::var("SERVER_PORT").unwrap();
+    pub static ref SERVER_HOST: Ipv4Addr = env::var("SERVER_HOST").unwrap().parse().unwrap();
+    pub static ref SERVER_PORT: u16 = env::var("SERVER_PORT").unwrap().parse().unwrap();
 
     // other params
     pub static ref PAGE_SIZE: i64 = env::var("PAGE_SIZE").unwrap().parse().unwrap();

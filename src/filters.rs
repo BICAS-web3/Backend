@@ -23,7 +23,7 @@ async fn with_signature<'a>(
         Err(reject::custom(ApiError::BadSignature(
             credentials.address.to_string(),
             credentials.nickname.to_string(),
-            credentials.signature.to_string(),
+            credentials.signature,
         )))
     }
 }

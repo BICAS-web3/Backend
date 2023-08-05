@@ -1,4 +1,4 @@
-use std::{io, net::Ipv4Addr};
+use std::io;
 
 use config::DatabaseSettings;
 use db::DB;
@@ -9,6 +9,7 @@ use tracing::{debug, error, info};
 use tracing_subscriber::{fmt, prelude::__tracing_subscriber_SubscriberExt, EnvFilter};
 use warp::Filter;
 
+mod communication;
 mod config;
 mod db;
 mod errors;
@@ -29,13 +30,13 @@ async fn main() {
         .unwrap();
 
     // load log config
-    let env_filter = EnvFilter::from_default_env().add_directive("node=debug".parse().unwrap());
+    let env_filter = EnvFilter::from_default_env().add_directive("backend=debug".parse().unwrap());
     let collector = tracing_subscriber::registry().with(env_filter).with(
         fmt::Layer::new()
             .with_writer(io::stdout)
             .with_thread_names(true),
     );
-    let file_appender = tracing_appender::rolling::minutely("logs", "node_log");
+    let file_appender = tracing_appender::rolling::minutely("logs", "backend_log");
     let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
     let collector = collector.with(
         fmt::Layer::new()
@@ -59,7 +60,7 @@ async fn main() {
     let db = DB::new(&db_settings).await;
 
     info!(
-        "The rest api is started on the {:?}:{:?}",
+        "The rest api is starting on the {:?}:{:?}",
         *config::SERVER_HOST,
         *config::SERVER_PORT
     );
@@ -68,7 +69,7 @@ async fn main() {
         _ = warp::serve(
             filters::init_filters(db).recover(handle_rejection), //.with(cors),
         )
-        .run((Ipv4Addr::UNSPECIFIED, 8282)) => {},
+        .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},
         _ = signal::ctrl_c() => {}
     }
 }
