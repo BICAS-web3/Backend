@@ -1,9 +1,10 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BlockExplorerUrl, Game, NetworkInfo, Nickname, Player, RpcUrl, Token,
+        Bet, BlockExplorerUrl, Game, GameInfo, NetworkInfo, Nickname, Player, RpcUrl, Token,
     },
 };
+
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::info;
 
@@ -30,6 +31,7 @@ impl DB {
             r#"SELECT 
                 network_id AS "network_id!",
                 network_name AS "network_name!",
+                short_name AS "short_name!",
                 currency_name AS "currency_name!",
                 currency_symbol AS "currency_symbol!",
                 decimals as "decimals!"
@@ -85,10 +87,23 @@ impl DB {
         .await
     }
 
+    pub async fn _query_all_games(&self, network_id: i64) -> Result<Vec<Game>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Game,
+            "SELECT *
+            FROM Game
+            WHERE network_id = $1
+            ",
+            network_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
     pub async fn query_game(
         &self,
         network_id: i64,
-        game_name: String,
+        game_name: &str,
     ) -> Result<Option<Game>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Game,
@@ -97,6 +112,7 @@ impl DB {
             FROM Game
             WHERE name = $1 
                 AND network_id = $2
+            LIMIT 1
             ",
             game_name,
             network_id
@@ -105,13 +121,31 @@ impl DB {
         .await
     }
 
-    pub async fn query_nickname(&self, address: String) -> Result<Option<Nickname>, sqlx::Error> {
+    pub async fn query_all_games_infos(
+        &self,
+        network_id: i64,
+    ) -> Result<Vec<GameInfo>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            GameInfo,
+            "
+            SELECT *
+            FROM GameInfo
+            WHERE network_id = $1
+            ",
+            network_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn query_nickname(&self, address: &str) -> Result<Option<Nickname>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Nickname,
             "
             SELECT *
             FROM Nickname
             WHERE address = $1
+            LIMIT 1
             ",
             address
         )
@@ -119,13 +153,31 @@ impl DB {
         .await
     }
 
-    pub async fn query_player(&self, address: String) -> Result<Option<Player>, sqlx::Error> {
+    pub async fn set_nickname(&self, address: &str, nickname: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "
+            INSERT INTO Nickname(address, nickname)
+            VALUES ($1, $2)
+            ON CONFLICT(address) DO UPDATE
+                SET nickname = excluded.nickname
+            ",
+            address,
+            nickname,
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
+    }
+
+    pub async fn query_player(&self, address: &str) -> Result<Option<Player>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Player,
             "
             SELECT *
             FROM Player
             WHERE address = $1
+            LIMIT 1
             ",
             address
         )
@@ -135,7 +187,7 @@ impl DB {
 
     pub async fn query_bets_for_address(
         &self,
-        player_address: String,
+        player_address: &str,
         last_id: Option<i64>,
         page_size: i64,
     ) -> Result<Vec<Bet>, sqlx::Error> {
@@ -145,8 +197,9 @@ impl DB {
                     Bet,
                     "
                 SELECT *
-                FROM Bet
+                 FROM Bet
                 WHERE player = $1
+                ORDER BY timestamp DESC
                 LIMIT $2
                 ",
                     player_address,
@@ -159,9 +212,10 @@ impl DB {
                 sqlx::query_as_unchecked!(
                     Bet,
                     "
-                SELECT *
+                 SELECT *
                 FROM Bet
-                WHERE id > $1 AND player = $2
+                WHERE id < $1 AND player = $2
+                ORDER BY timestamp DESC
                 LIMIT $3
                 ",
                     last_id,
@@ -217,5 +271,48 @@ impl DB {
         )
         .fetch_all(&self.db_pool)
         .await
+    }
+
+    pub async fn place_bet(&self, bet: &Bet) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "
+            INSERT INTO Bet(
+                transaction_hash,
+                player,
+                timestamp,
+                game_id,
+                wager,
+                token_address,
+                network_id,
+                bets,
+                multiplier,
+                profit
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                $7,
+                $8,
+                $9,
+                $10
+            )
+            ",
+            bet.transaction_hash,
+            bet.player,
+            bet.timestamp.naive_utc(),
+            bet.game_id,
+            bet.wager,
+            bet.token_address,
+            bet.network_id,
+            bet.bets,
+            bet.multiplier,
+            bet.profit
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
     }
 }

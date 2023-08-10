@@ -1,7 +1,7 @@
 use warp::{hyper::StatusCode, reject};
 
 use crate::errors::ApiError;
-use tracing::{error, info};
+use tracing::error;
 
 pub async fn handle_rejection(
     err: reject::Rejection,

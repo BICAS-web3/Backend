@@ -5,6 +5,12 @@ use warp::reject;
 pub enum ApiError {
     #[error("Db Error: {0}")]
     DbError(sqlx::Error),
+
+    #[error("The game `{0}` for network `{1}` wasn't found")]
+    GameDoesntExist(i64, String),
+
+    #[error("Bad signature provided address: `{0}` message: `{1}` signature: `{2}`")]
+    BadSignature(String, String, String),
 }
 
 impl reject::Reject for ApiError {}

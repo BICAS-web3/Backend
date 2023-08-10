@@ -7,6 +7,7 @@ DROP TABLE IF EXISTS Game CASCADE;
 DROP TABLE IF EXISTS Nickname CASCADE;
 DROP TABLE IF EXISTS Player CASCADE;
 DROP TABLE IF EXISTS Bet CASCADE;
+DROP TABLE IF EXISTS BanWords CASCADE;
 
 
 CREATE TABLE IF NOT EXISTS NativeCurrency(
@@ -19,6 +20,7 @@ CREATE TABLE IF NOT EXISTS NativeCurrency(
 CREATE TABLE IF NOT EXISTS Network(
     id BIGINT PRIMARY KEY,
     name TEXT NOT NULL,
+    short_name TEXT NOT NULL,
     native_currency_id BIGSERIAL NOT NULL,
 
     CONSTRAINT fk_nativecurrency
@@ -29,6 +31,7 @@ CREATE TABLE IF NOT EXISTS Network(
 CREATE VIEW NetworkInfo AS
     SELECT network.id as network_id,
             network.name as network_name,
+            network.short_name as short_name,
             nativecurrency.name as currency_name,
             nativecurrency.symbol as currency_symbol,
             nativecurrency.decimals
@@ -68,18 +71,48 @@ CREATE TABLE IF NOT EXISTS Token(
             REFERENCES Network(id)
 );
 
+CREATE UNIQUE INDEX token_network_id_idx ON Token(network_id, contract_address);
+CREATE INDEX token_network_id_idx ON Token(contract_address);
+
+CREATE TABLE IF NOT EXISTS GameAbi(
+    signature character(66) NOT NULL PRIMARY KEY,
+    types TEXT NOT NULL,
+    names TEXT NOT NULL
+);
+
+-- CREATE UNIQUE INDEX game_address_idx ON GameAbi(signature);
+
 CREATE TABLE IF NOT EXISTS Game(
     id BIGSERIAL PRIMARY KEY,
     network_id BIGSERIAL NOT NULL,
     name TEXT NOT NULL,
     address character(42) NOT NULL,
+    result_event_signature character(66) NOT NULL,
 
     CONSTRAINT fk_network
         FOREIGN KEY(network_id)
-            REFERENCES Network(id)
+            REFERENCES Network(id),
+
+    CONSTRAINT fk_signature
+        FOREIGN KEY(result_event_signature)
+            REFERENCES GameAbi(signature)
 );
 
+CREATE UNIQUE INDEX game_network_id_idx ON Game(network_id, address);
+CREATE UNIQUE INDEX game_address_idx ON Game(address);
 CREATE UNIQUE INDEX game_idx ON Game(network_id, name);
+
+CREATE VIEW GameInfo AS 
+    SELECT Game.id as id,
+            Game.network_id as network_id,
+            Game.name as name,
+            Game.address as address,
+            GameAbi.signature as event_signature,
+            GameAbi.types as event_types,
+            GameAbi.names as event_names
+        FROM Game
+    INNER JOIN GameAbi 
+        ON Game.result_event_signature = GameAbi.signature;
 
 CREATE TABLE IF NOT EXISTS Nickname(
     id BIGSERIAL PRIMARY KEY,
@@ -104,28 +137,32 @@ CREATE UNIQUE INDEX player_idx ON Player(address);
 
 CREATE TABLE IF NOT EXISTS Bet(
     id BIGSERIAL PRIMARY KEY,
+    transaction_hash character(66) NOT NULL UNIQUE,
     player character(42) NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     game_id BIGINT NOT NULL,
-    wager BIGINT NOT NULL,
-    token_id BIGINT NOT NULL,
+    wager DECIMAL(1000, 0) NOT NULL,
+    token_address character(42) NOT NULL,
+    network_id BIGINT NOT NULL,
     bets BIGINT NOT NULL,
     multiplier DOUBLE PRECISION NOT NULL,
-    profit DOUBLE PRECISION NOT NULL,
-
-    CONSTRAINT fk_player
-        FOREIGN KEY(player)
-            REFERENCES Player(address),
+    profit DECIMAL(1000, 0) NOT NULL,
 
     CONSTRAINT fk_game
         FOREIGN KEY(game_id)
             REFERENCES Game(id),
 
-    CONSTRAINT fk_token
-        FOREIGN KEY(token_id)
-            REFERENCES Token(id)
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
 );
 
 CREATE INDEX bet_player_idx ON Bet(player);
 CREATE INDEX bet_game_idx ON Bet(game_id);
 CREATE INDEX bet_idx ON Bet(player, game_id);
+
+
+CREATE TABLE IF NOT EXISTS BanWords(
+    id BIGSERIAL PRIMARY KEY,
+    word TEXT
+)
