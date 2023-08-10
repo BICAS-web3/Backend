@@ -4,8 +4,8 @@ use crate::{
         Bet, BlockExplorerUrl, Game, GameInfo, NetworkInfo, Nickname, Player, RpcUrl, Token,
     },
 };
-use chrono::{DateTime, Utc};
-use sqlx::{postgres::PgPoolOptions, types::BigDecimal, PgPool};
+
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::info;
 
 #[derive(Debug, Clone)]
@@ -87,7 +87,7 @@ impl DB {
         .await
     }
 
-    pub async fn query_all_games(&self, network_id: i64) -> Result<Vec<Game>, sqlx::Error> {
+    pub async fn _query_all_games(&self, network_id: i64) -> Result<Vec<Game>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Game,
             "SELECT *
@@ -273,19 +273,7 @@ impl DB {
         .await
     }
 
-    pub async fn place_bet(
-        &self,
-        transaction_hash: &str,
-        player: &str,
-        timestamp: DateTime<Utc>,
-        game_id: i64,
-        wager: BigDecimal,
-        token_address: &str,
-        network_id: i64,
-        bets: i64,
-        multiplier: f64,
-        profit: BigDecimal,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn place_bet(&self, bet: &Bet) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "
             INSERT INTO Bet(
@@ -312,16 +300,16 @@ impl DB {
                 $10
             )
             ",
-            transaction_hash,
-            player,
-            timestamp.naive_utc(),
-            game_id,
-            wager,
-            token_address,
-            network_id,
-            bets,
-            multiplier,
-            profit
+            bet.transaction_hash,
+            bet.player,
+            bet.timestamp.naive_utc(),
+            bet.game_id,
+            bet.wager,
+            bet.token_address,
+            bet.network_id,
+            bet.bets,
+            bet.multiplier,
+            bet.profit
         )
         .execute(&self.db_pool)
         .await

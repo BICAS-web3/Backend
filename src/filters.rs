@@ -169,7 +169,7 @@ pub fn init_filters(
         .or(get_network_bets(db))
         .or(warp::path!("updates")
             .and(warp::ws())
-            .and(with_channel(bet_sender.clone()))
+            .and(with_channel(bet_sender))
             .map(|ws: warp::ws::Ws, ch| {
                 ws.on_upgrade(move |socket| handlers::websockets_handler(socket, ch))
             }))

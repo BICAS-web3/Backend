@@ -13,6 +13,8 @@ use tracing::{debug, warn};
 
 use web3::types::{FilterBuilder, H160};
 
+type GameInnerInfo = HashMap<H256, (H160, (Vec<ParamType>, Vec<String>), GameInfo)>;
+
 pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
     // channels
     let (db_sender, db_receiver) = unbounded_channel();
@@ -34,7 +36,7 @@ pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
             .into_iter()
             .map(|rpc| rpc.url)
             .collect();
-        let games: HashMap<H256, (H160, (Vec<ParamType>, Vec<String>), GameInfo)> = db
+        let games: GameInnerInfo = db
             .query_all_games_infos(network.network_id)
             .await
             .unwrap()
@@ -74,7 +76,7 @@ pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
 
 pub async fn network_handler(
     rpc_urls: Vec<String>,
-    games: HashMap<H256, (H160, (Vec<ParamType>, Vec<String>), GameInfo)>,
+    games: GameInnerInfo,
     db_sender: DbSender,
     bet_sender: BetSender,
 ) {
@@ -172,19 +174,6 @@ pub async fn network_handler(
 
 pub async fn db_listener(mut receiver: DbReceiver, db: DB) {
     while let Some(msg) = receiver.recv().await {
-        db.place_bet(
-            &msg.transaction_hash,
-            &msg.player,
-            msg.timestamp,
-            msg.game_id,
-            msg.wager,
-            &msg.token_address,
-            msg.network_id,
-            msg.bets,
-            msg.multiplier,
-            msg.profit,
-        )
-        .await
-        .unwrap();
+        db.place_bet(&msg).await.unwrap();
     }
 }
