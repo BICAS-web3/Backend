@@ -1,5 +1,6 @@
 use std::io;
 
+use crate::communication::*;
 use config::DatabaseSettings;
 use db::DB;
 use rejection_handler::handle_rejection;
@@ -16,6 +17,7 @@ mod errors;
 mod filters;
 mod handlers;
 mod models;
+mod network_handler;
 mod rejection_handler;
 mod tools;
 
@@ -30,7 +32,9 @@ async fn main() {
         .unwrap();
 
     // load log config
-    let env_filter = EnvFilter::from_default_env().add_directive("backend=debug".parse().unwrap());
+    let env_filter = EnvFilter::from_default_env()
+        .add_directive("backend=debug".parse().unwrap())
+        .add_directive("hyper=warn".parse().unwrap());
     let collector = tracing_subscriber::registry().with(env_filter).with(
         fmt::Layer::new()
             .with_writer(io::stdout)
@@ -64,6 +68,10 @@ async fn main() {
         *config::SERVER_HOST,
         *config::SERVER_PORT
     );
+
+    let (bet_sender, bet_receiver) = channel(10000);
+
+    network_handler::start_network_handlers(&db, bet_sender.clone()).await;
 
     tokio::select! {
         _ = warp::serve(

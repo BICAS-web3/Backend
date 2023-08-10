@@ -4,6 +4,8 @@ pub mod db_models {
     use super::*;
     use chrono::serde::ts_seconds;
     use chrono::{DateTime, Utc};
+    use serde_with::{serde_as, DisplayFromStr};
+    use sqlx::types::BigDecimal;
 
     #[derive(Deserialize, Serialize)]
     pub struct NativeCurrency {
@@ -17,6 +19,7 @@ pub mod db_models {
     pub struct Network {
         pub id: i64,
         pub name: String,
+        pub short_name: String,
         pub native_currency_id: i64,
     }
 
@@ -24,6 +27,7 @@ pub mod db_models {
     pub struct NetworkInfo {
         pub network_id: i64,
         pub network_name: String,
+        pub short_name: String,
         pub currency_name: String,
         pub currency_symbol: String,
         pub decimals: i64,
@@ -60,6 +64,19 @@ pub mod db_models {
         pub name: String,
         /// 42 symbols
         pub address: String,
+        pub result_event_signature: String,
+    }
+
+    #[derive(Deserialize, Serialize)]
+    pub struct GameInfo {
+        pub id: i64,
+        pub network_id: i64,
+        pub name: String,
+        /// 42 symbols
+        pub address: String,
+        pub event_signature: String,
+        pub event_types: String,
+        pub event_names: String,
     }
 
     #[derive(Deserialize, Serialize)]
@@ -83,18 +100,23 @@ pub mod db_models {
         pub highest_multiplier: f64,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[serde_as]
+    #[derive(Deserialize, Serialize, Clone, Debug)]
     pub struct Bet {
         pub id: i64,
+        pub transaction_hash: String,
         pub player: String,
         #[serde(with = "ts_seconds")]
         pub timestamp: DateTime<Utc>,
         pub game_id: i64,
-        pub wager: i64,
-        pub token_id: i64,
+        #[serde_as(as = "DisplayFromStr")]
+        pub wager: BigDecimal,
+        pub token_address: String,
+        pub network_id: i64,
         pub bets: i64,
         pub multiplier: f64,
-        pub profit: f64,
+        #[serde_as(as = "DisplayFromStr")]
+        pub profit: BigDecimal,
     }
 
     // pub struct Lobby {
