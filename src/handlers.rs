@@ -1,3 +1,4 @@
+use crate::communication::BetReceiver;
 use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
@@ -6,9 +7,11 @@ use crate::models::json_requests;
 use crate::models::json_responses::{
     Bets, BlockExplorers, InfoText, JsonResponse, Networks, ResponseBody, Rpcs, Status, Tokens,
 };
+use futures::{SinkExt, StreamExt};
 use serde::Serialize;
 use tracing::debug;
 use warp::http::StatusCode;
+use warp::ws::{Message, WebSocket};
 use warp::Reply;
 use warp::{reject, reply::Response as WarpResponse};
 
@@ -173,4 +176,14 @@ pub async fn get_network_bets(netowork_id: i64, db: DB) -> Result<WarpResponse, 
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+}
+
+pub async fn websockets_handler(socket: WebSocket, mut channel: BetReceiver) {
+    let (mut ws_tx, _) = socket.split();
+    while let Ok(bet) = channel.recv().await {
+        ws_tx
+            .send(Message::text(serde_json::to_string(&bet).unwrap()))
+            .await
+            .unwrap();
+    }
 }

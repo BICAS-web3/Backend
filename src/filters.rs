@@ -1,3 +1,5 @@
+use crate::communication::BetReceiver;
+use crate::communication::BetSender;
 use crate::db::DB;
 use crate::errors::ApiError;
 use crate::handlers;
@@ -8,6 +10,12 @@ use warp::Filter;
 
 fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
+}
+
+fn with_channel(
+    ch: BetSender,
+) -> impl Filter<Extract = (BetReceiver,), Error = std::convert::Infallible> + Clone {
+    warp::any().map(move || ch.subscribe())
 }
 
 async fn with_signature<'a>(
@@ -135,8 +143,18 @@ pub fn get_network_bets(
         .and_then(handlers::get_network_bets)
 }
 
+// pub fn websockets(bet_receiver: BetReceiver) -> i64 {
+//     warp::path!("updates")
+//         .and(warp::ws())
+//         .and(with_channel(bet_receiver))
+//         .map(|ws: warp::ws::Ws, ch| {
+//             ws.on_upgrade(move |socket| handlers::websockets_handler(socket, ch))
+//         })
+// }
+
 pub fn init_filters(
     db: DB,
+    bet_sender: BetSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     get_networks(db.clone())
         .or(get_rpcs(db.clone()))
@@ -149,4 +167,10 @@ pub fn init_filters(
         .or(get_player_bets(db.clone()))
         .or(get_game_bets(db.clone()))
         .or(get_network_bets(db))
+        .or(warp::path!("updates")
+            .and(warp::ws())
+            .and(with_channel(bet_sender.clone()))
+            .map(|ws: warp::ws::Ws, ch| {
+                ws.on_upgrade(move |socket| handlers::websockets_handler(socket, ch))
+            }))
 }

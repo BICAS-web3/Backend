@@ -6,7 +6,7 @@ use db::DB;
 use rejection_handler::handle_rejection;
 use std::env;
 use tokio::signal;
-use tracing::{debug, error, info};
+use tracing::{debug, error, info, warn};
 use tracing_subscriber::{fmt, prelude::__tracing_subscriber_SubscriberExt, EnvFilter};
 use warp::Filter;
 
@@ -69,15 +69,19 @@ async fn main() {
         *config::SERVER_PORT
     );
 
-    let (bet_sender, bet_receiver) = channel(10000);
+    let (bet_sender, _bet_receiver) = channel(10000);
 
-    network_handler::start_network_handlers(&db, bet_sender.clone()).await;
+    info!("Staring networks handlers");
+    network_handler::start_network_handlers(db.clone(), bet_sender.clone()).await;
 
+    info!("Server started, waiting for CTRL+C");
     tokio::select! {
         _ = warp::serve(
-            filters::init_filters(db).recover(handle_rejection), //.with(cors),
+            filters::init_filters(db, bet_sender).recover(handle_rejection), //.with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},
-        _ = signal::ctrl_c() => {}
+        _ = signal::ctrl_c() => {
+            warn!("CTRL+C received, stopping process...")
+        }
     }
 }

@@ -1,20 +1,19 @@
-use crate::models::db_models::{Bet, Game, GameInfo};
-use crate::{communication::*, config, db::DB};
+use crate::models::db_models::{Bet, GameInfo};
+use crate::{communication::*, db::DB};
 use chrono::Utc;
 use ethabi::ethereum_types::H256;
 use ethabi::{ParamType, Token};
-use futures::{stream::FuturesUnordered, StreamExt};
+use futures::StreamExt;
 use sqlx::types::BigDecimal;
 use std::collections::HashMap;
-use std::path::Path;
+
 use std::str::FromStr;
 use std::time;
 use tracing::{debug, warn};
-use web3::contract::tokens::Detokenize;
-use web3::contract::Contract;
+
 use web3::types::{FilterBuilder, H160};
 
-pub async fn start_network_handlers(db: &DB, bet_sender: BetSender) {
+pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
     // channels
     let (db_sender, db_receiver) = unbounded_channel();
 
@@ -24,6 +23,10 @@ pub async fn start_network_handlers(db: &DB, bet_sender: BetSender) {
 
     let networks = db.query_all_networks().await.unwrap();
     for network in networks {
+        debug!(
+            "Staring games handlers on network: `{:?}`",
+            network.network_id
+        );
         let rpcs = db
             .query_all_rpcs(network.network_id)
             .await
@@ -37,6 +40,7 @@ pub async fn start_network_handlers(db: &DB, bet_sender: BetSender) {
             .unwrap()
             .into_iter()
             .map(|game| {
+                debug!("Producing data for game `{:?}`", game.id);
                 let mut game_address: [u8; 20] = [0; 20];
                 hex::decode_to_slice(game.address[2..].as_bytes(), &mut game_address).unwrap();
 
@@ -59,7 +63,12 @@ pub async fn start_network_handlers(db: &DB, bet_sender: BetSender) {
                 )
             })
             .collect();
-        network_handler(rpcs, games, db_sender.clone(), bet_sender.clone()).await;
+        tokio::spawn(network_handler(
+            rpcs,
+            games,
+            db_sender.clone(),
+            bet_sender.clone(),
+        ));
     }
 }
 
@@ -89,7 +98,7 @@ pub async fn network_handler(
         debug!("Log received {:?}", log);
 
         let topics = log.topics;
-        let (game_address, (types, names), game) = match games.get(&topics[0]) {
+        let (_, (types, names), game) = match games.get(&topics[0]) {
             Some(r) => r,
             None => {
                 warn!("No event signature `{:?}` was found", topics[0]);
