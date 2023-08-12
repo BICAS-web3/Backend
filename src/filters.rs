@@ -89,7 +89,7 @@ pub fn get_game(
 pub fn get_nickname(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_nickame" / String)
+    warp::path!("get_nickname" / String)
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_nickname)

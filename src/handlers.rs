@@ -109,14 +109,13 @@ pub async fn get_nickname(address: String, db: DB) -> Result<WarpResponse, warp:
         .query_nickname(&address)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?
-        .map(|n| {
+        .unwrap_or({
             debug!("Nickname for an address `{}` wasn't found", address);
-            n
-        })
-        .unwrap_or(Nickname {
-            id: 0,
-            address: address.clone(),
-            nickname: address,
+            Nickname {
+                id: 0,
+                address: address.clone(),
+                nickname: address,
+            }
         });
 
     Ok(gen_arbitrary_response(ResponseBody::Nickname(nickname)))
