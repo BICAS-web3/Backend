@@ -166,11 +166,12 @@ pub fn init_filters(
         .or(get_player(db.clone()))
         .or(get_player_bets(db.clone()))
         .or(get_game_bets(db.clone()))
-        .or(get_network_bets(db))
+        .or(get_network_bets(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
+            .and(with_db(db))
             .and(with_channel(bet_sender))
-            .map(|ws: warp::ws::Ws, ch| {
-                ws.on_upgrade(move |socket| handlers::websockets_handler(socket, ch))
+            .map(|ws: warp::ws::Ws, db, ch| {
+                ws.on_upgrade(move |socket| handlers::websockets_handler(socket, db, ch))
             }))
 }

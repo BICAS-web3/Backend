@@ -188,7 +188,7 @@ pub mod json_responses {
 
     #[derive(Deserialize, Serialize)]
     pub struct Networks {
-        pub info: Vec<NetworkInfo>,
+        pub networks: Vec<NetworkInfo>,
     }
 
     #[derive(Deserialize, Serialize)]
@@ -220,5 +220,11 @@ pub mod json_requests {
         pub address: String,
         pub nickname: String,
         pub signature: String,
+    }
+
+    #[derive(Deserialize, Serialize)]
+    pub enum WebsocketsIncommingMessage {
+        Subscribe(Vec<i64>),
+        Unsubscribe(Vec<i64>),
     }
 }

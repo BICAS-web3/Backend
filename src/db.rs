@@ -87,7 +87,10 @@ impl DB {
         .await
     }
 
-    pub async fn _query_all_games(&self, network_id: i64) -> Result<Vec<Game>, sqlx::Error> {
+    pub async fn _query_all_games_for_network(
+        &self,
+        network_id: i64,
+    ) -> Result<Vec<Game>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Game,
             "SELECT *
@@ -95,6 +98,17 @@ impl DB {
             WHERE network_id = $1
             ",
             network_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn _query_all_games(&self) -> Result<Vec<Game>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Game,
+            "SELECT * 
+            FROM Game
+            "
         )
         .fetch_all(&self.db_pool)
         .await
