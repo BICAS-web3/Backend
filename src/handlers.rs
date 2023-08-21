@@ -1,15 +1,21 @@
+use std::collections::HashSet;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 use crate::communication::BetReceiver;
 use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
 use crate::models::db_models::Nickname;
-use crate::models::json_requests;
+use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 use crate::models::json_responses::{
     Bets, BlockExplorers, InfoText, JsonResponse, Networks, ResponseBody, Rpcs, Status, Tokens,
 };
+use futures::stream::SplitStream;
 use futures::{SinkExt, StreamExt};
 use serde::Serialize;
-use tracing::debug;
+use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tracing::{debug, error};
 use warp::http::StatusCode;
 use warp::ws::{Message, WebSocket};
 use warp::Reply;
@@ -53,7 +59,7 @@ pub async fn get_networks(db: DB) -> Result<WarpResponse, warp::Rejection> {
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
     Ok(gen_arbitrary_response(ResponseBody::Networks(Networks {
-        info: networks,
+        networks: networks,
     })))
 }
 
@@ -109,14 +115,13 @@ pub async fn get_nickname(address: String, db: DB) -> Result<WarpResponse, warp:
         .query_nickname(&address)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?
-        .map(|n| {
+        .unwrap_or({
             debug!("Nickname for an address `{}` wasn't found", address);
-            n
-        })
-        .unwrap_or(Nickname {
-            id: 0,
-            address: address.clone(),
-            nickname: address,
+            Nickname {
+                id: 0,
+                address: address.clone(),
+                nickname: address,
+            }
         });
 
     Ok(gen_arbitrary_response(ResponseBody::Nickname(nickname)))
@@ -138,11 +143,10 @@ pub async fn get_player(address: String, db: DB) -> Result<WarpResponse, warp::R
         .query_player(&address)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?
-        .map(|p| {
+        .unwrap_or_else(|| {
             debug!("Player with address `{}` wasn't foung", address);
-            p
-        })
-        .unwrap_or(Default::default());
+            Default::default()
+        });
 
     Ok(gen_arbitrary_response(ResponseBody::Player(player)))
 }
@@ -178,12 +182,112 @@ pub async fn get_network_bets(netowork_id: i64, db: DB) -> Result<WarpResponse, 
     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
 }
 
-pub async fn websockets_handler(socket: WebSocket, mut channel: BetReceiver) {
-    let (mut ws_tx, _) = socket.split();
-    while let Ok(bet) = channel.recv().await {
-        ws_tx
-            .send(Message::text(serde_json::to_string(&bet).unwrap()))
-            .await
-            .unwrap();
+pub async fn get_abi(signature: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
+    let abi = db
+        .query_abi(&signature)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::Abi(abi)))
+}
+
+pub async fn websockets_subscriptions_reader(
+    mut socket: SplitStream<WebSocket>,
+    subscriptions_propagation: UnboundedSender<WebsocketsIncommingMessage>,
+    _db: DB,
+    run: Arc<AtomicBool>,
+) {
+    while run.load(Ordering::Relaxed) {
+        let message = socket.next().await;
+        match message {
+            Some(m) => match m {
+                Ok(message) => {
+                    if let Ok(message) = message.to_str() {
+                        let message: WebsocketsIncommingMessage =
+                            match serde_json::from_str(message) {
+                                Ok(m) => m,
+                                Err(e) => {
+                                    error!("Error parsing message `{}` | Error: {:?}", message, e);
+                                    continue;
+                                }
+                            };
+
+                        if let Err(e) = subscriptions_propagation.send(message) {
+                            error!("Error propagating message {:?}", e);
+                            break;
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("Error on a websocket: {:?}", e);
+                    break;
+                }
+            },
+            None => {
+                break;
+            }
+        }
     }
+}
+
+pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetReceiver) {
+    let (mut ws_tx, ws_rx) = socket.split();
+    let mut subscriptions: HashSet<i64> = Default::default();
+
+    let (subscriptions_tx, mut subscriptions_rx) = unbounded_channel();
+
+    let run = Arc::new(AtomicBool::new(true));
+    tokio::spawn(websockets_subscriptions_reader(
+        ws_rx,
+        subscriptions_tx,
+        db,
+        run.clone(),
+    ));
+
+    loop {
+        tokio::select! {
+            bet = channel.recv() => {
+                match bet{
+                    Ok(bet) => {
+                        if subscriptions.get(&bet.game_id).is_none(){
+                            continue;
+                        }
+                        ws_tx
+                            .send(Message::text(serde_json::to_string(&bet).unwrap()))
+                            .await
+                            .unwrap();
+                    },
+                    Err(e) => {
+                        error!("Error recieving bet {:?}", e);
+                        break;
+                    },
+                }
+            }
+            msg = subscriptions_rx.recv() => {
+                match msg{
+                    Some(subs) => {
+                        match subs{
+                            WebsocketsIncommingMessage::Subscribe(s) => {
+                                for sub in s{
+                                    if sub >= 0 || sub <= 100{
+                                        subscriptions.insert(sub);
+                                    }
+                                }
+                            },
+                            WebsocketsIncommingMessage::Unsubscribe(s) => {
+                                for sub in s {
+                                    subscriptions.remove(&sub);
+                                }
+                            },
+                        }
+                    },
+                    None => {
+                        break;
+                    },
+                }
+            }
+        }
+    }
+
+    run.store(false, Ordering::Relaxed);
 }

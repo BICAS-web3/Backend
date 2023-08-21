@@ -1,7 +1,8 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BlockExplorerUrl, Game, GameInfo, NetworkInfo, Nickname, Player, RpcUrl, Token,
+        Bet, BlockExplorerUrl, Game, GameAbi, GameInfo, NetworkInfo, Nickname, Player, RpcUrl,
+        Token,
     },
 };
 
@@ -87,7 +88,10 @@ impl DB {
         .await
     }
 
-    pub async fn _query_all_games(&self, network_id: i64) -> Result<Vec<Game>, sqlx::Error> {
+    pub async fn _query_all_games_for_network(
+        &self,
+        network_id: i64,
+    ) -> Result<Vec<Game>, sqlx::Error> {
         sqlx::query_as_unchecked!(
             Game,
             "SELECT *
@@ -95,6 +99,17 @@ impl DB {
             WHERE network_id = $1
             ",
             network_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn _query_all_games(&self) -> Result<Vec<Game>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Game,
+            "SELECT * 
+            FROM Game
+            "
         )
         .fetch_all(&self.db_pool)
         .await
@@ -314,5 +329,17 @@ impl DB {
         .execute(&self.db_pool)
         .await
         .map(|_| ())
+    }
+
+    pub async fn query_abi(&self, signature: &str) -> Result<GameAbi, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            GameAbi,
+            "
+            SELECT * FROM GameAbi WHERE signature=$1 LIMIT 1
+            ",
+            signature
+        )
+        .fetch_one(&self.db_pool)
+        .await
     }
 }
