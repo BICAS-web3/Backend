@@ -63,7 +63,6 @@ CREATE TABLE IF NOT EXISTS Token(
     id BIGSERIAL PRIMARY KEY,
     network_id BIGSERIAL NOT NULL,
     name TEXT NOT NULL,
-    icon TEXT NOT NULL,
     contract_address character(42) NOT NULL,
 
     CONSTRAINT fk_network
@@ -72,7 +71,7 @@ CREATE TABLE IF NOT EXISTS Token(
 );
 
 CREATE UNIQUE INDEX token_network_id_idx ON Token(network_id, contract_address);
-CREATE INDEX token_network_id_idx ON Token(contract_address);
+CREATE INDEX token_idx ON Token(contract_address);
 
 CREATE TABLE IF NOT EXISTS GameAbi(
     signature character(66) NOT NULL PRIMARY KEY,

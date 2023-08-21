@@ -143,13 +143,20 @@ pub fn get_network_bets(
         .and_then(handlers::get_network_bets)
 }
 
-// pub fn websockets(bet_receiver: BetReceiver) -> i64 {
-//     warp::path!("updates")
-//         .and(warp::ws())
-//         .and(with_channel(bet_receiver))
-//         .map(|ws: warp::ws::Ws, ch| {
-//             ws.on_upgrade(move |socket| handlers::websockets_handler(socket, ch))
-//         })
+pub fn get_abi(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get_abi" / String)
+        .and(with_db(db))
+        .and_then(handlers::get_abi)
+}
+
+// pub fn get_full_game(
+//     db: DB,
+// ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone{
+//     warp::path!("get_full_game" / String)
+//         .and(with_db(db))
+//         .and_then(handlers::get_full_game)
 // }
 
 pub fn init_filters(
@@ -167,6 +174,7 @@ pub fn init_filters(
         .or(get_player_bets(db.clone()))
         .or(get_game_bets(db.clone()))
         .or(get_network_bets(db.clone()))
+        .or(get_abi(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

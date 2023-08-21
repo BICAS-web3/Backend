@@ -52,7 +52,6 @@ pub mod db_models {
         pub id: i64,
         pub network_id: i64,
         pub name: String,
-        pub icon: String,
         /// 42 symbols
         pub contract_address: String,
     }
@@ -119,6 +118,13 @@ pub mod db_models {
         pub profit: BigDecimal,
     }
 
+    #[derive(Deserialize, Serialize, Clone, Debug)]
+    pub struct GameAbi {
+        pub signature: String,
+        pub types: String,
+        pub names: String,
+    }
+
     // pub struct Lobby {
     //     pub id: i64,
     //     pub game_id: i64
@@ -135,7 +141,7 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        Bet, BlockExplorerUrl, Game, NetworkInfo, Nickname, Player, RpcUrl, Token,
+        Bet, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, RpcUrl, Token,
     };
     use super::*;
 
@@ -174,6 +180,7 @@ pub mod json_responses {
         Nickname(Nickname),
         Player(Player),
         Bets(Bets),
+        Abi(GameAbi),
     }
 
     #[derive(Serialize, Deserialize, Clone)]

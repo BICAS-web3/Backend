@@ -143,11 +143,10 @@ pub async fn get_player(address: String, db: DB) -> Result<WarpResponse, warp::R
         .query_player(&address)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?
-        .map(|p| {
+        .unwrap_or_else(|| {
             debug!("Player with address `{}` wasn't foung", address);
-            p
-        })
-        .unwrap_or(Default::default());
+            Default::default()
+        });
 
     Ok(gen_arbitrary_response(ResponseBody::Player(player)))
 }
@@ -181,6 +180,15 @@ pub async fn get_network_bets(netowork_id: i64, db: DB) -> Result<WarpResponse, 
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+}
+
+pub async fn get_abi(signature: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
+    let abi = db
+        .query_abi(&signature)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::Abi(abi)))
 }
 
 pub async fn websockets_subscriptions_reader(

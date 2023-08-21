@@ -1,7 +1,8 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BlockExplorerUrl, Game, GameInfo, NetworkInfo, Nickname, Player, RpcUrl, Token,
+        Bet, BlockExplorerUrl, Game, GameAbi, GameInfo, NetworkInfo, Nickname, Player, RpcUrl,
+        Token,
     },
 };
 
@@ -328,5 +329,17 @@ impl DB {
         .execute(&self.db_pool)
         .await
         .map(|_| ())
+    }
+
+    pub async fn query_abi(&self, signature: &str) -> Result<GameAbi, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            GameAbi,
+            "
+            SELECT * FROM GameAbi WHERE signature=$1 LIMIT 1
+            ",
+            signature
+        )
+        .fetch_one(&self.db_pool)
+        .await
     }
 }
