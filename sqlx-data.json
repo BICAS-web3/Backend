@@ -142,6 +142,86 @@
     },
     "query": "\n            SELECT * FROM GameAbi WHERE signature=$1 LIMIT 1\n            "
   },
+  "2d00154702ab45a6cc460638b60acab15f8420ecefdf84c6888cd0183c84d9b9": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "transaction_hash",
+          "ordinal": 1,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "player",
+          "ordinal": 2,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "timestamp",
+          "ordinal": 3,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "game_id",
+          "ordinal": 4,
+          "type_info": "Int8"
+        },
+        {
+          "name": "wager",
+          "ordinal": 5,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "token_address",
+          "ordinal": 6,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "network_id",
+          "ordinal": 7,
+          "type_info": "Int8"
+        },
+        {
+          "name": "bets",
+          "ordinal": 8,
+          "type_info": "Int8"
+        },
+        {
+          "name": "multiplier",
+          "ordinal": 9,
+          "type_info": "Float8"
+        },
+        {
+          "name": "profit",
+          "ordinal": 10,
+          "type_info": "Numeric"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT *\n            FROM Bet\n            ORDER BY timestamp DESC\n            LIMIT $1\n            "
+  },
   "310ddb667f3966376b9ed04e2d7fe6e9411e3ed3fa5031b744c41a73c0cf2ddf": {
     "describe": {
       "columns": [

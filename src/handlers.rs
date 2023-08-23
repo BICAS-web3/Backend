@@ -191,6 +191,15 @@ pub async fn get_abi(signature: String, db: DB) -> Result<WarpResponse, warp::Re
     Ok(gen_arbitrary_response(ResponseBody::Abi(abi)))
 }
 
+pub async fn get_all_last_bets(db: DB) -> Result<WarpResponse, warp::Rejection> {
+    let bets = db
+        .query_all_latest_bets(*config::PAGE_SIZE)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+}
+
 pub async fn websockets_subscriptions_reader(
     mut socket: SplitStream<WebSocket>,
     subscriptions_propagation: UnboundedSender<WebsocketsIncommingMessage>,

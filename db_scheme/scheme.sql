@@ -159,6 +159,7 @@ CREATE TABLE IF NOT EXISTS Bet(
 CREATE INDEX bet_player_idx ON Bet(player);
 CREATE INDEX bet_game_idx ON Bet(game_id);
 CREATE INDEX bet_idx ON Bet(player, game_id);
+CREATE INDEX last_bets_idx ON Bet(timestamp desc);
 
 
 CREATE TABLE IF NOT EXISTS BanWords(
