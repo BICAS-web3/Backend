@@ -230,8 +230,11 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize)]
+    #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
-        Subscribe(Vec<i64>),
-        Unsubscribe(Vec<i64>),
+        Subscribe { payload: Vec<i64> },
+        Unsubscribe { payload: Vec<i64> },
+        SubscribeAll,
+        UnsubscribeAll,
     }
 }

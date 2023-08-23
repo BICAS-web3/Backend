@@ -288,6 +288,21 @@ impl DB {
         .await
     }
 
+    pub async fn query_all_latest_bets(&self, limit: i64) -> Result<Vec<Bet>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Bet,
+            "
+            SELECT *
+            FROM Bet
+            ORDER BY timestamp DESC
+            LIMIT $1
+            ",
+            limit
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
     pub async fn place_bet(&self, bet: &Bet) -> Result<(), sqlx::Error> {
         sqlx::query!(
             "

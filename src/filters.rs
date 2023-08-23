@@ -143,6 +143,14 @@ pub fn get_network_bets(
         .and_then(handlers::get_network_bets)
 }
 
+pub fn get_all_last_bets(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get_all_last_bets")
+        .and(with_db(db))
+        .and_then(handlers::get_all_last_bets)
+}
+
 pub fn get_abi(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -175,6 +183,7 @@ pub fn init_filters(
         .or(get_game_bets(db.clone()))
         .or(get_network_bets(db.clone()))
         .or(get_abi(db.clone()))
+        .or(get_all_last_bets(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))
