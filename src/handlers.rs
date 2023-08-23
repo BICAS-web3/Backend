@@ -268,7 +268,7 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                 match msg{
                     Some(subs) => {
                         match subs{
-                            WebsocketsIncommingMessage::Subscribe(s) => {
+                            WebsocketsIncommingMessage::Subscribe{payload: s} => {
                                 if subscribed_all{
                                     continue;
                                 }
@@ -278,7 +278,7 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                                     }
                                 }
                             },
-                            WebsocketsIncommingMessage::Unsubscribe(s) => {
+                            WebsocketsIncommingMessage::Unsubscribe{payload: s} => {
                                 if subscribed_all{
                                     continue;
                                 }
