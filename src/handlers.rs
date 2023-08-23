@@ -59,7 +59,7 @@ pub async fn get_networks(db: DB) -> Result<WarpResponse, warp::Rejection> {
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
     Ok(gen_arbitrary_response(ResponseBody::Networks(Networks {
-        networks: networks,
+        networks,
     })))
 }
 
@@ -233,6 +233,7 @@ pub async fn websockets_subscriptions_reader(
 pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetReceiver) {
     let (mut ws_tx, ws_rx) = socket.split();
     let mut subscriptions: HashSet<i64> = Default::default();
+    let mut subscribed_all: bool = false;
 
     let (subscriptions_tx, mut subscriptions_rx) = unbounded_channel();
 
@@ -249,7 +250,7 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
             bet = channel.recv() => {
                 match bet{
                     Ok(bet) => {
-                        if subscriptions.get(&bet.game_id).is_none(){
+                        if !subscribed_all && subscriptions.get(&bet.game_id).is_none(){
                             continue;
                         }
                         ws_tx
@@ -268,6 +269,9 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                     Some(subs) => {
                         match subs{
                             WebsocketsIncommingMessage::Subscribe(s) => {
+                                if subscribed_all{
+                                    continue;
+                                }
                                 for sub in s{
                                     if sub >= 0 || sub <= 100{
                                         subscriptions.insert(sub);
@@ -275,10 +279,19 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                                 }
                             },
                             WebsocketsIncommingMessage::Unsubscribe(s) => {
+                                if subscribed_all{
+                                    continue;
+                                }
                                 for sub in s {
                                     subscriptions.remove(&sub);
                                 }
                             },
+                            WebsocketsIncommingMessage::SubscribeAll => {
+                                subscribed_all = true;
+                            },
+                            WebsocketsIncommingMessage::UnsubscribeAll => {
+                                subscribed_all = false;
+                            }
                         }
                     },
                     None => {

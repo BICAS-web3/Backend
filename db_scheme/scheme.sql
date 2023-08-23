@@ -164,4 +164,4 @@ CREATE INDEX bet_idx ON Bet(player, game_id);
 CREATE TABLE IF NOT EXISTS BanWords(
     id BIGSERIAL PRIMARY KEY,
     word TEXT
-)
+);

@@ -233,5 +233,7 @@ pub mod json_requests {
     pub enum WebsocketsIncommingMessage {
         Subscribe(Vec<i64>),
         Unsubscribe(Vec<i64>),
+        SubscribeAll,
+        UnsubscribeAll,
     }
 }
