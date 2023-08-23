@@ -110,6 +110,38 @@
     },
     "query": "SELECT \n                network_id AS \"network_id!\",\n                network_name AS \"network_name!\",\n                short_name AS \"short_name!\",\n                currency_name AS \"currency_name!\",\n                currency_symbol AS \"currency_symbol!\",\n                decimals as \"decimals!\"\n            FROM NetworkInfo"
   },
+  "2cc72026e500aff55ca92bb883dfeded305b5af2f49c486bff2a7e473a5a7867": {
+    "describe": {
+      "columns": [
+        {
+          "name": "signature",
+          "ordinal": 0,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "types",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "names",
+          "ordinal": 2,
+          "type_info": "Text"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Bpchar"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM GameAbi WHERE signature=$1 LIMIT 1\n            "
+  },
   "310ddb667f3966376b9ed04e2d7fe6e9411e3ed3fa5031b744c41a73c0cf2ddf": {
     "describe": {
       "columns": [
@@ -217,18 +249,12 @@
           "type_info": "Text"
         },
         {
-          "name": "icon",
-          "ordinal": 3,
-          "type_info": "Text"
-        },
-        {
           "name": "contract_address",
-          "ordinal": 4,
+          "ordinal": 3,
           "type_info": "Bpchar"
         }
       ],
       "nullable": [
-        false,
         false,
         false,
         false,
@@ -753,5 +779,47 @@
       }
     },
     "query": "SELECT \n                id as \"id!\",\n                network_id as \"network_id!\",\n                url as \"url!\"\n            FROM BlockExplorerUrl \n            WHERE network_id = $1"
+  },
+  "fb507a472a0be7ac4ea7f55cf4638ba614bd0f09acb0c27fed354d2b1b41ed58": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "network_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "name",
+          "ordinal": 2,
+          "type_info": "Text"
+        },
+        {
+          "name": "address",
+          "ordinal": 3,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "result_event_signature",
+          "ordinal": 4,
+          "type_info": "Bpchar"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "SELECT * \n            FROM Game\n            "
   }
 }
