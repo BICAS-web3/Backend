@@ -1,9 +1,9 @@
 pub use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use crate::models::db_models::Bet;
+use crate::models::db_models::{Bet, BetInfo};
 
-pub type BetReceiver = Receiver<Bet>;
-pub type BetSender = Sender<Bet>;
+pub type BetReceiver = Receiver<BetInfo>;
+pub type BetSender = Sender<BetInfo>;
 
 pub use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 

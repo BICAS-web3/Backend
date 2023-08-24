@@ -15,6 +15,7 @@ use futures::stream::SplitStream;
 use futures::{SinkExt, StreamExt};
 use serde::Serialize;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
+use tokio::time::{sleep, Duration};
 use tracing::{debug, error};
 use warp::http::StatusCode;
 use warp::ws::{Message, WebSocket};
@@ -74,7 +75,7 @@ pub async fn get_rpcs(network_id: i64, db: DB) -> Result<WarpResponse, warp::Rej
 
 pub async fn get_block_explorers(network_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
     let explorers = db
-        .query_all_block_explorers(network_id)
+        .query_block_explorers(network_id)
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
@@ -200,6 +201,36 @@ pub async fn get_all_last_bets(db: DB) -> Result<WarpResponse, warp::Rejection> 
     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
 }
 
+pub async fn get_all_explorers(db: DB) -> Result<WarpResponse, warp::Rejection> {
+    let explorers = db
+        .query_all_block_explorers()
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::BlockExplorers(
+        BlockExplorers { explorers },
+    )))
+}
+
+pub async fn get_game_by_id(game_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
+    let game = db
+        .query_game_by_id(game_id)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?
+        .ok_or(reject::custom(ApiError::GameWithIDDoesntExist(game_id)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::Game(game)))
+}
+
+pub async fn get_bets_for_game(game_name: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
+    let bets = db
+        .query_bets_for_game_name(&game_name, *config::PAGE_SIZE)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+}
+
 pub async fn websockets_subscriptions_reader(
     mut socket: SplitStream<WebSocket>,
     subscriptions_propagation: UnboundedSender<WebsocketsIncommingMessage>,
@@ -240,8 +271,9 @@ pub async fn websockets_subscriptions_reader(
 }
 
 pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetReceiver) {
+    debug!("New connection {:?}", &socket);
     let (mut ws_tx, ws_rx) = socket.split();
-    let mut subscriptions: HashSet<i64> = Default::default();
+    let mut subscriptions: HashSet<String> = Default::default();
     let mut subscribed_all: bool = false;
 
     let (subscriptions_tx, mut subscriptions_rx) = unbounded_channel();
@@ -259,9 +291,10 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
             bet = channel.recv() => {
                 match bet{
                     Ok(bet) => {
-                        if !subscribed_all && subscriptions.get(&bet.game_id).is_none(){
+                        if !subscribed_all && subscriptions.get(&bet.game_name).is_none(){
                             continue;
                         }
+
                         ws_tx
                             .send(Message::text(serde_json::to_string(&bet).unwrap()))
                             .await
@@ -273,6 +306,12 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                     },
                 }
             }
+            _ = sleep(Duration::from_millis(5000)) => {
+                ws_tx
+                    .send(Message::text(serde_json::to_string(&WebsocketsIncommingMessage::Ping).unwrap()))
+                    .await
+                    .unwrap();
+            }
             msg = subscriptions_rx.recv() => {
                 match msg{
                     Some(subs) => {
@@ -281,10 +320,13 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                                 if subscribed_all{
                                     continue;
                                 }
-                                for sub in s{
-                                    if sub >= 0 || sub <= 100{
-                                        subscriptions.insert(sub);
-                                    }
+                                let mut end = 100-subscriptions.len();
+                                if end > s.len(){
+                                    end = s.len();
+                                }
+                                for sub in &s[0..end]{
+                                    subscriptions.insert(sub.clone());
+
                                 }
                             },
                             WebsocketsIncommingMessage::Unsubscribe{payload: s} => {
@@ -300,7 +342,8 @@ pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetRecei
                             },
                             WebsocketsIncommingMessage::UnsubscribeAll => {
                                 subscribed_all = false;
-                            }
+                            },
+                            WebsocketsIncommingMessage::Ping => {}
                         }
                     },
                     None => {
