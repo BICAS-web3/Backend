@@ -1,4 +1,4 @@
-use crate::models::db_models::{Bet, GameInfo};
+use crate::models::db_models::{Bet, BetInfo, GameInfo, NetworkInfo};
 use crate::{communication::*, db::DB};
 use chrono::Utc;
 use ethabi::ethereum_types::H256;
@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use std::str::FromStr;
 use std::time;
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 
 use web3::types::{FilterBuilder, H160};
 
@@ -66,19 +66,23 @@ pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
             })
             .collect();
         tokio::spawn(network_handler(
+            network,
             rpcs,
             games,
             db_sender.clone(),
             bet_sender.clone(),
+            db.clone(),
         ));
     }
 }
 
 pub async fn network_handler(
+    network: NetworkInfo,
     rpc_urls: Vec<String>,
     games: GameInnerInfo,
     db_sender: DbSender,
     bet_sender: BetSender,
+    db: DB,
 ) {
     let transport = rpc_urls
         .iter()
@@ -166,9 +170,35 @@ pub async fn network_handler(
             .unwrap(),
         };
 
-        db_sender.send(bet.clone()).unwrap();
+        if let Ok(token) = db.query_token(&bet.token_address).await {
+            let bet_info = BetInfo {
+                id: 0,
+                transaction_hash: bet.transaction_hash.clone(),
+                player: bet.player.clone(),
+                player_nickname: db
+                    .query_nickname(&bet.player)
+                    .await
+                    .unwrap_or(None)
+                    .map(|player| player.nickname),
+                timestamp: bet.timestamp,
+                game_id: bet.game_id,
+                game_name: game.name.clone(),
+                wager: bet.wager.clone(),
+                token_address: bet.token_address.clone(),
+                token_name: token.name,
+                network_id: bet.network_id,
+                network_name: network.network_name.clone(),
+                bets: bet.bets,
+                multiplier: bet.multiplier,
+                profit: bet.profit.clone(),
+            };
 
-        bet_sender.send(bet).unwrap();
+            db_sender.send(bet.clone()).unwrap();
+
+            bet_sender.send(bet_info).unwrap();
+        } else {
+            error!("Token `{}` not found", &bet.token_address);
+        }
     }
 }
 

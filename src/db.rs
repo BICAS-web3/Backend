@@ -1,8 +1,8 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BlockExplorerUrl, Game, GameAbi, GameInfo, NetworkInfo, Nickname, Player, RpcUrl,
-        Token,
+        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, NetworkInfo, Nickname, Player,
+        RpcUrl, Token,
     },
 };
 
@@ -42,6 +42,21 @@ impl DB {
         .await
     }
 
+    pub async fn query_token(&self, address: &str) -> Result<Token, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Token,
+            r#"
+            SELECT *
+            FROM Token
+            WHERE contract_address = $1
+            LIMIT 1
+            "#,
+            address
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
     pub async fn query_all_rpcs(&self, network_id: i64) -> Result<Vec<RpcUrl>, sqlx::Error> {
         sqlx::query_as!(
             RpcUrl,
@@ -57,7 +72,7 @@ impl DB {
         .await
     }
 
-    pub async fn query_all_block_explorers(
+    pub async fn query_block_explorers(
         &self,
         network_id: i64,
     ) -> Result<Vec<BlockExplorerUrl>, sqlx::Error> {
@@ -70,6 +85,19 @@ impl DB {
             FROM BlockExplorerUrl 
             WHERE network_id = $1"#,
             network_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn query_all_block_explorers(&self) -> Result<Vec<BlockExplorerUrl>, sqlx::Error> {
+        sqlx::query_as!(
+            BlockExplorerUrl,
+            r#"SELECT 
+                id as "id!",
+                network_id as "network_id!",
+                url as "url!"
+            FROM BlockExplorerUrl"#
         )
         .fetch_all(&self.db_pool)
         .await
@@ -131,6 +159,21 @@ impl DB {
             ",
             game_name,
             network_id
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
+    pub async fn query_game_by_id(&self, game_id: i64) -> Result<Option<Game>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Game,
+            "
+            SELECT *
+            FROM Game
+            WHERE id=$1
+            LIMIT 1
+            ",
+            game_id
         )
         .fetch_optional(&self.db_pool)
         .await
@@ -205,14 +248,14 @@ impl DB {
         player_address: &str,
         last_id: Option<i64>,
         page_size: i64,
-    ) -> Result<Vec<Bet>, sqlx::Error> {
+    ) -> Result<Vec<BetInfo>, sqlx::Error> {
         match last_id {
             None => {
                 sqlx::query_as_unchecked!(
-                    Bet,
+                    BetInfo,
                     "
                 SELECT *
-                 FROM Bet
+                 FROM BetInfo
                 WHERE player = $1
                 ORDER BY timestamp DESC
                 LIMIT $2
@@ -225,10 +268,10 @@ impl DB {
             }
             Some(last_id) => {
                 sqlx::query_as_unchecked!(
-                    Bet,
+                    BetInfo,
                     "
                  SELECT *
-                FROM Bet
+                FROM BetInfo
                 WHERE id < $1 AND player = $2
                 ORDER BY timestamp DESC
                 LIMIT $3
@@ -247,12 +290,12 @@ impl DB {
         &self,
         game_id: i64,
         limit: i64,
-    ) -> Result<Vec<Bet>, sqlx::Error> {
+    ) -> Result<Vec<BetInfo>, sqlx::Error> {
         sqlx::query_as_unchecked!(
-            Bet,
+            BetInfo,
             "
             SELECT *
-            FROM Bet
+            FROM BetInfo
             WHERE game_id = $1
             ORDER BY timestamp DESC
             LIMIT $2
@@ -264,16 +307,37 @@ impl DB {
         .await
     }
 
+    pub async fn query_bets_for_game_name(
+        &self,
+        game_name: &str,
+        limit: i64,
+    ) -> Result<Vec<BetInfo>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            BetInfo,
+            "
+            SELECT *
+            FROM BetInfo
+            WHERE game_name = $1
+            ORDER BY timestamp DESC
+            LIMIT $2
+            ",
+            game_name,
+            limit
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
     pub async fn query_bets_for_network(
         &self,
         network_id: i64,
         limit: i64,
-    ) -> Result<Vec<Bet>, sqlx::Error> {
+    ) -> Result<Vec<BetInfo>, sqlx::Error> {
         sqlx::query_as_unchecked!(
-            Bet,
+            BetInfo,
             "
             SELECT *
-            FROM Bet
+            FROM BetInfo
             WHERE game_id IN (
                 SELECT id 
                 FROM Game 
@@ -288,12 +352,12 @@ impl DB {
         .await
     }
 
-    pub async fn query_all_latest_bets(&self, limit: i64) -> Result<Vec<Bet>, sqlx::Error> {
+    pub async fn query_all_latest_bets(&self, limit: i64) -> Result<Vec<BetInfo>, sqlx::Error> {
         sqlx::query_as_unchecked!(
-            Bet,
+            BetInfo,
             "
             SELECT *
-            FROM Bet
+            FROM BetInfo
             ORDER BY timestamp DESC
             LIMIT $1
             ",

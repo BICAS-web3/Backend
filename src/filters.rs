@@ -159,6 +159,30 @@ pub fn get_abi(
         .and_then(handlers::get_abi)
 }
 
+pub fn get_all_explorers(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get_all_explorers")
+        .and(with_db(db))
+        .and_then(handlers::get_all_explorers)
+}
+
+pub fn get_game_by_id(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get_game" / i64)
+        .and(with_db(db))
+        .and_then(handlers::get_game_by_id)
+}
+
+pub fn get_bets_for_game(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get_game_bets" / String)
+        .and(with_db(db))
+        .and_then(handlers::get_bets_for_game)
+}
+
 // pub fn get_full_game(
 //     db: DB,
 // ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone{
@@ -184,6 +208,9 @@ pub fn init_filters(
         .or(get_network_bets(db.clone()))
         .or(get_abi(db.clone()))
         .or(get_all_last_bets(db.clone()))
+        .or(get_all_explorers(db.clone()))
+        .or(get_game_by_id(db.clone()))
+        .or(get_bets_for_game(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

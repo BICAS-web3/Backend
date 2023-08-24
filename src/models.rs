@@ -118,6 +118,29 @@ pub mod db_models {
         pub profit: BigDecimal,
     }
 
+    #[serde_as]
+    #[derive(Deserialize, Serialize, Clone, Debug)]
+    pub struct BetInfo {
+        pub id: i64,
+        pub transaction_hash: String,
+        pub player: String,
+        pub player_nickname: Option<String>,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub game_id: i64,
+        pub game_name: String,
+        #[serde_as(as = "DisplayFromStr")]
+        pub wager: BigDecimal,
+        pub token_address: String,
+        pub token_name: String,
+        pub network_id: i64,
+        pub network_name: String,
+        pub bets: i64,
+        pub multiplier: f64,
+        #[serde_as(as = "DisplayFromStr")]
+        pub profit: BigDecimal,
+    }
+
     #[derive(Deserialize, Serialize, Clone, Debug)]
     pub struct GameAbi {
         pub signature: String,
@@ -141,7 +164,7 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        Bet, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, RpcUrl, Token,
+        BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, RpcUrl, Token,
     };
     use super::*;
 
@@ -215,7 +238,7 @@ pub mod json_responses {
 
     #[derive(Deserialize, Serialize)]
     pub struct Bets {
-        pub bets: Vec<Bet>,
+        pub bets: Vec<BetInfo>,
     }
 }
 
@@ -230,11 +253,17 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize)]
+    pub struct ByNetworkId {
+        pub network_id: i64,
+    }
+
+    #[derive(Deserialize, Serialize)]
     #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
-        Subscribe { payload: Vec<i64> },
-        Unsubscribe { payload: Vec<i64> },
+        Subscribe { payload: Vec<String> },
+        Unsubscribe { payload: Vec<String> },
         SubscribeAll,
         UnsubscribeAll,
+        Ping,
     }
 }

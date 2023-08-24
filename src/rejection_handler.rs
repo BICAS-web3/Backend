@@ -7,6 +7,7 @@ pub async fn handle_rejection(
     err: reject::Rejection,
 ) -> std::result::Result<impl warp::Reply, std::convert::Infallible> {
     let (code, message) = if err.is_not_found() {
+        error!("Not Found: {:?}", err);
         (StatusCode::NOT_FOUND, "Not Found".to_string())
     } else if let Some(e) = err.find::<ApiError>() {
         error!("Error: {:?}", e);

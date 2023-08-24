@@ -161,6 +161,32 @@ CREATE INDEX bet_game_idx ON Bet(game_id);
 CREATE INDEX bet_idx ON Bet(player, game_id);
 CREATE INDEX last_bets_idx ON Bet(timestamp desc);
 
+CREATE VIEW BetInfo AS 
+    SELECT Bet.id as id,
+            Bet.transaction_hash as transaction_hash,
+            Bet.player as player,
+            Nickname.nickname as player_nickname,
+            Bet.timestamp as timestamp,
+            Bet.game_id as game_id,
+            Game.name as game_name,
+            Bet.wager as wager,
+            Bet.token_address as token_address,
+            Token.name as token_name,
+            Bet.network_id as network_id,
+            Network.name as network_name,
+            Bet.bets as bets,
+            Bet.multiplier as multiplier,
+            Bet.profit as profit
+        FROM Bet
+    INNER JOIN Game
+        ON Bet.game_id = Game.id
+	INNER JOIN Network
+        ON Bet.network_id = Network.id
+	INNER JOIN Token
+        ON Bet.token_address = Token.contract_address
+	LEFT JOIN Nickname
+        ON Bet.player = Nickname.address;
+
 
 CREATE TABLE IF NOT EXISTS BanWords(
     id BIGSERIAL PRIMARY KEY,
