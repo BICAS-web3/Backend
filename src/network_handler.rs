@@ -180,7 +180,7 @@ pub async fn network_handler(
                     .await
                     .unwrap_or(None)
                     .map(|player| player.nickname),
-                timestamp: bet.timestamp.clone(),
+                timestamp: bet.timestamp,
                 game_id: bet.game_id,
                 game_name: game.name.clone(),
                 wager: bet.wager.clone(),
@@ -188,8 +188,8 @@ pub async fn network_handler(
                 token_name: token.name,
                 network_id: bet.network_id,
                 network_name: network.network_name.clone(),
-                bets: bet.bets.clone(),
-                multiplier: bet.multiplier.clone(),
+                bets: bet.bets,
+                multiplier: bet.multiplier,
                 profit: bet.profit.clone(),
             };
 
