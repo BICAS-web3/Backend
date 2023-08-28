@@ -76,6 +76,7 @@ pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
     }
 }
 
+#[allow(unused_assignments)]
 pub async fn network_handler(
     network: NetworkInfo,
     rpc_urls: Vec<String>,
@@ -84,120 +85,155 @@ pub async fn network_handler(
     bet_sender: BetSender,
     db: DB,
 ) {
-    let transport = rpc_urls
-        .iter()
-        .find_map(|url| web3::transports::Http::new(url).ok())
-        .unwrap();
-    let web3 = web3::Web3::new(transport);
+    let mut restart = true;
 
-    let filter = FilterBuilder::default()
-        .address(games.iter().map(|item| item.1 .0).collect())
-        .build();
-
-    let filter = web3.eth_filter().create_logs_filter(filter).await.unwrap();
-
-    let logs_stream = filter.stream(time::Duration::from_secs(1));
-    futures::pin_mut!(logs_stream);
-
-    loop {
-        let log = logs_stream.next().await.unwrap().unwrap();
-        debug!("Log received {:?}", log);
-
-        let topics = log.topics;
-        let (_, (types, names), game) = match games.get(&topics[0]) {
-            Some(r) => r,
-            None => {
-                warn!("No event signature `{:?}` was found", topics[0]);
-                continue;
-            }
-        };
-
-        let decoded_data = ethabi::decode(types, &log.data.0).unwrap();
-        debug!("Decoded data {:?}", &decoded_data);
-        let decoded_data: HashMap<String, Token> = names
+    while restart {
+        restart = false;
+        let transport = rpc_urls
             .iter()
-            .cloned()
-            .zip(decoded_data.into_iter())
-            .collect();
-        debug!("Decoded data as hashmap {:?}", &decoded_data);
+            .find_map(|url| web3::transports::Http::new(url).ok())
+            .unwrap();
 
-        let bet = Bet {
-            id: 0,
-            transaction_hash: format!("0x{}", hex::encode(log.transaction_hash.unwrap().0)),
-            player: format!("0x{}", hex::encode(&topics[1].0[12..])),
-            timestamp: Utc::now(),
-            game_id: game.id,
-            wager: BigDecimal::from_str(
-                &decoded_data
-                    .get("wager")
-                    .unwrap()
-                    .clone()
-                    .into_uint()
-                    .unwrap()
-                    .to_string(),
-            )
-            .unwrap(),
-            token_address: format!(
-                "0x{}",
-                hex::encode(
-                    decoded_data
-                        .get("tokenAddress")
-                        .unwrap()
-                        .clone()
-                        .into_address()
-                        .unwrap()
-                        .0
-                )
-            ),
-            network_id: game.network_id,
-            bets: decoded_data
-                .get("numGames")
-                .unwrap()
-                .clone()
-                .into_uint()
-                .unwrap()
-                .as_u64() as i64,
-            multiplier: 1.0,
-            profit: BigDecimal::from_str(
-                &decoded_data
-                    .get("payout")
-                    .unwrap()
-                    .clone()
-                    .into_uint()
-                    .unwrap()
-                    .to_string(),
-            )
-            .unwrap(),
-        };
+        debug!("Starting listening to rpc: {:?}", transport);
 
-        if let Ok(token) = db.query_token(&bet.token_address).await {
-            let bet_info = BetInfo {
-                id: 0,
-                transaction_hash: bet.transaction_hash.clone(),
-                player: bet.player.clone(),
-                player_nickname: db
-                    .query_nickname(&bet.player)
-                    .await
-                    .unwrap_or(None)
-                    .map(|player| player.nickname),
-                timestamp: bet.timestamp,
-                game_id: bet.game_id,
-                game_name: game.name.clone(),
-                wager: bet.wager.clone(),
-                token_address: bet.token_address.clone(),
-                token_name: token.name,
-                network_id: bet.network_id,
-                network_name: network.network_name.clone(),
-                bets: bet.bets,
-                multiplier: bet.multiplier,
-                profit: bet.profit.clone(),
+        let web3 = web3::Web3::new(transport);
+
+        let filter = FilterBuilder::default()
+            .address(games.iter().map(|item| item.1 .0).collect())
+            .build();
+
+        let filter = web3.eth_filter().create_logs_filter(filter).await.unwrap();
+
+        let logs_stream = filter.stream(time::Duration::from_secs(1));
+        futures::pin_mut!(logs_stream);
+
+        loop {
+            let log = match logs_stream.next().await {
+                Some(Ok(log)) => log,
+                Some(Err(e)) => {
+                    error!(
+                        "Error reading log stream for Network: `{:?}` {:?}",
+                        network.network_id, e
+                    );
+                    restart = true;
+                    break;
+                }
+                None => {
+                    warn!(
+                        "Connection for Network `{:?}` is closed",
+                        network.network_id
+                    );
+                    restart = true;
+                    break;
+                }
+            };
+            debug!("Log received {:?}", log);
+
+            let topics = log.topics;
+            let (_, (types, names), game) = match games.get(&topics[0]) {
+                Some(r) => r,
+                None => {
+                    warn!("No event signature `{:?}` was found", topics[0]);
+                    continue;
+                }
             };
 
-            db_sender.send(bet.clone()).unwrap();
+            let decoded_data = match ethabi::decode(types, &log.data.0) {
+                Ok(data) => data,
+                Err(e) => {
+                    error!(
+                        "Network: `{:?}` error on decoding data: {:?}",
+                        network.network_id, e
+                    );
+                    continue;
+                }
+            };
+            debug!("Decoded data {:?}", &decoded_data);
+            let decoded_data: HashMap<String, Token> = names
+                .iter()
+                .cloned()
+                .zip(decoded_data.into_iter())
+                .collect();
+            debug!("Decoded data as hashmap {:?}", &decoded_data);
 
-            bet_sender.send(bet_info).unwrap();
-        } else {
-            error!("Token `{}` not found", &bet.token_address);
+            let bet = Bet {
+                id: 0,
+                transaction_hash: format!("0x{}", hex::encode(log.transaction_hash.unwrap().0)),
+                player: format!("0x{}", hex::encode(&topics[1].0[12..])),
+                timestamp: Utc::now(),
+                game_id: game.id,
+                wager: BigDecimal::from_str(
+                    &decoded_data
+                        .get("wager")
+                        .unwrap()
+                        .clone()
+                        .into_uint()
+                        .unwrap()
+                        .to_string(),
+                )
+                .unwrap(),
+                token_address: format!(
+                    "0x{}",
+                    hex::encode(
+                        decoded_data
+                            .get("tokenAddress")
+                            .unwrap()
+                            .clone()
+                            .into_address()
+                            .unwrap()
+                            .0
+                    )
+                ),
+                network_id: game.network_id,
+                bets: decoded_data
+                    .get("numGames")
+                    .unwrap()
+                    .clone()
+                    .into_uint()
+                    .unwrap()
+                    .as_u32() as i64,
+                multiplier: 1.0,
+                profit: BigDecimal::from_str(
+                    &decoded_data
+                        .get("payout")
+                        .unwrap()
+                        .clone()
+                        .into_uint()
+                        .unwrap()
+                        .to_string(),
+                )
+                .unwrap(),
+            };
+
+            if let Ok(token) = db.query_token(&bet.token_address).await {
+                let bet_info = BetInfo {
+                    id: 0,
+                    transaction_hash: bet.transaction_hash.clone(),
+                    player: bet.player.clone(),
+                    player_nickname: db
+                        .query_nickname(&bet.player)
+                        .await
+                        .unwrap_or(None)
+                        .map(|player| player.nickname),
+                    timestamp: bet.timestamp,
+                    game_id: bet.game_id,
+                    game_name: game.name.clone(),
+                    wager: bet.wager.clone(),
+                    token_address: bet.token_address.clone(),
+                    token_name: token.name,
+                    network_id: bet.network_id,
+                    network_name: network.network_name.clone(),
+                    bets: bet.bets,
+                    multiplier: bet.multiplier,
+                    profit: bet.profit.clone(),
+                };
+
+                db_sender.send(bet.clone()).unwrap();
+
+                bet_sender.send(bet_info).unwrap();
+            } else {
+                error!("Token `{}` not found", &bet.token_address);
+            }
         }
     }
 }
