@@ -41,55 +41,103 @@ fn json_body_set_nickname(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+// NETWORKS
 pub fn get_networks(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_networks")
+    warp::path!("list")
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_networks)
 }
 
+pub fn network(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("network").and(get_networks(db))
+}
+
+// RPCS
 pub fn get_rpcs(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_rpcs" / i64)
+    warp::path!("get" / i64)
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_rpcs)
 }
 
+pub fn rpc(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("rpc").and(get_rpcs(db))
+}
+
+// EXPLORERS
+pub fn get_all_explorers(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("list")
+        .and(with_db(db))
+        .and_then(handlers::get_all_explorers)
+}
+
 pub fn get_block_explorers(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_explorers" / i64)
+    warp::path!("get" / i64)
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_block_explorers)
 }
 
+pub fn block_explorer(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("block_epxlorer").and(get_block_explorers(db.clone()).or(get_all_explorers(db)))
+}
+
+// TOKENS
 pub fn get_tokens(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_tokens" / i64)
+    warp::path!("get" / i64)
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_tokens)
 }
 
+pub fn token(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("token").and(get_tokens(db))
+}
+
+// GAMES
 pub fn get_game(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_game" / i64 / String)
+    warp::path!("get" / i64 / String)
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_game)
 }
 
+pub fn get_game_by_id(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get" / i64)
+        .and(with_db(db))
+        .and_then(handlers::get_game_by_id)
+}
+
+pub fn game(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("game").and(get_game(db.clone()).or(get_game_by_id(db)))
+}
+
+// PLAYER
 pub fn get_nickname(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_nickname" / String)
+    warp::path!("get" / String)
         .and(warp::get())
         .and(with_db(db))
         .and_then(handlers::get_nickname)
@@ -98,7 +146,8 @@ pub fn get_nickname(
 pub fn set_nickname(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("set_nickname")
+    warp::path!("set")
+        .and(warp::post())
         .and(json_body_set_nickname())
         .and_then(with_signature)
         .and(with_db(db))
@@ -108,15 +157,38 @@ pub fn set_nickname(
 pub fn get_player(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_player" / String)
+    warp::path!("get" / String)
         .and(with_db(db))
         .and_then(handlers::get_player)
 }
 
+pub fn player(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("player").and(
+        get_player(db.clone())
+            .or(warp::path("nickname").and(get_nickname(db.clone()).or(set_nickname(db)))),
+    )
+}
+
+// ABI
+pub fn get_abi(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get" / String)
+        .and(with_db(db))
+        .and_then(handlers::get_abi)
+}
+
+pub fn abi(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("abi").and(get_abi(db))
+}
+
+// BETS
 pub fn get_player_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_player_bets" / String)
+    warp::path!("player" / String / ..)
         .and(
             warp::path::param::<i64>()
                 .map(Some)
@@ -130,7 +202,7 @@ pub fn get_player_bets(
 pub fn get_game_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_game_bets" / i64)
+    warp::path!("game" / i64)
         .and(with_db(db))
         .and_then(handlers::get_game_bets)
 }
@@ -138,7 +210,7 @@ pub fn get_game_bets(
 pub fn get_network_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_network_bets" / i64)
+    warp::path!("network" / i64)
         .and(with_db(db))
         .and_then(handlers::get_network_bets)
 }
@@ -146,41 +218,27 @@ pub fn get_network_bets(
 pub fn get_all_last_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_all_last_bets")
+    warp::path!("list")
         .and(with_db(db))
         .and_then(handlers::get_all_last_bets)
-}
-
-pub fn get_abi(
-    db: DB,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_abi" / String)
-        .and(with_db(db))
-        .and_then(handlers::get_abi)
-}
-
-pub fn get_all_explorers(
-    db: DB,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_all_explorers")
-        .and(with_db(db))
-        .and_then(handlers::get_all_explorers)
-}
-
-pub fn get_game_by_id(
-    db: DB,
-) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_game" / i64)
-        .and(with_db(db))
-        .and_then(handlers::get_game_by_id)
 }
 
 pub fn get_bets_for_game(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("get_game_bets" / String)
+    warp::path!("game" / String)
         .and(with_db(db))
         .and_then(handlers::get_bets_for_game)
+}
+
+pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("bets").and(
+        get_player_bets(db.clone())
+            .or(get_game_bets(db.clone()))
+            .or(get_network_bets(db.clone()))
+            .or(get_all_last_bets(db.clone()))
+            .or(get_bets_for_game(db)),
+    )
 }
 
 // pub fn get_full_game(
@@ -195,22 +253,30 @@ pub fn init_filters(
     db: DB,
     bet_sender: BetSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    get_networks(db.clone())
-        .or(get_rpcs(db.clone()))
-        .or(get_block_explorers(db.clone()))
-        .or(get_tokens(db.clone()))
-        .or(get_game(db.clone()))
-        .or(get_nickname(db.clone()))
-        .or(set_nickname(db.clone()))
-        .or(get_player(db.clone()))
-        .or(get_player_bets(db.clone()))
-        .or(get_game_bets(db.clone()))
-        .or(get_network_bets(db.clone()))
-        .or(get_abi(db.clone()))
-        .or(get_all_last_bets(db.clone()))
-        .or(get_all_explorers(db.clone()))
-        .or(get_game_by_id(db.clone()))
-        .or(get_bets_for_game(db.clone()))
+    //get_networks(db.clone())
+    // .or(get_rpcs(db.clone()))
+    // .or(get_block_explorers(db.clone()))
+    // .or(get_tokens(db.clone()))
+    // .or(get_game(db.clone()))
+    // .or(get_nickname(db.clone()))
+    // .or(set_nickname(db.clone()))
+    // .or(get_player(db.clone()))
+    // .or(get_player_bets(db.clone()))
+    // .or(get_game_bets(db.clone()))
+    // .or(get_network_bets(db.clone()))
+    // .or(get_abi(db.clone()))
+    // .or(get_all_last_bets(db.clone()))
+    // .or(get_all_explorers(db.clone()))
+    // .or(get_game_by_id(db.clone()))
+    // .or(get_bets_for_game(db.clone()))
+    network(db.clone())
+        .or(rpc(db.clone()))
+        .or(block_explorer(db.clone()))
+        .or(token(db.clone()))
+        .or(game(db.clone()))
+        .or(player(db.clone()))
+        .or(abi(db.clone()))
+        .or(bets(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

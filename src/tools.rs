@@ -22,7 +22,9 @@ pub fn verify_signature(pub_key: &str, message: &str, signature: &str) -> bool {
         }
     };
 
-    let calculated_pubkey = match recover(&message_hash, &signature[..64], 0) {
+    let recovery_id = signature[64] as i32 - 27;
+
+    let calculated_pubkey = match recover(&message_hash, &signature[..64], recovery_id) {
         Ok(s) => s,
         Err(_) => {
             return false;
@@ -40,6 +42,6 @@ pub mod tests {
 
     #[test]
     fn verify_signature_test() {
-        assert!(verify_signature(&"0x5C0369359155C836F5D02f1D77fc11F637DBbF2b".to_lowercase(), "Example `personal_sign` message", "74f4f02824ee4d25feb72149027b21821b4b27d23ada2d693f87a3e89f6de4d80dc44f940afba47db9eaf5c4a5677d449ab2e669dac816892b5044b5540474ce1b"))
+        assert!(verify_signature(&"0x5C0369359155C836F5D02f1D77fc11F637DBbF2b".to_lowercase(), "Sewer", "d734986394109a62815fe958484fcc9f55dc9a5fed1c43bbfec6fdebaf4cb41d3d344021f4e88c6a35bf0ef381a6e6e6e279f52f398365f25b10eb8bb7fda1921c"))
     }
 }
