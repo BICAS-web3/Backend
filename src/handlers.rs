@@ -165,6 +165,19 @@ pub async fn get_player_bets(
     Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
 }
 
+pub async fn get_player_bets_inc(
+    address: String,
+    first_id: Option<i64>,
+    db: DB,
+) -> Result<WarpResponse, warp::Rejection> {
+    let bets = db
+        .query_bets_for_address_inc(&address, first_id, *config::PAGE_SIZE)
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+    Ok(gen_arbitrary_response(ResponseBody::Bets(Bets { bets })))
+}
+
 pub async fn get_game_bets(game_id: i64, db: DB) -> Result<WarpResponse, warp::Rejection> {
     let bets = db
         .query_bets_for_game(game_id, *config::PAGE_SIZE)
