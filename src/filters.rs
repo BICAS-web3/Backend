@@ -199,6 +199,20 @@ pub fn get_player_bets(
         .and_then(handlers::get_player_bets)
 }
 
+pub fn get_player_bets_inc(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("player" / "inc" / String / ..)
+        .and(
+            warp::path::param::<i64>()
+                .map(Some)
+                .or_else(|_| async { Ok::<(Option<i64>,), std::convert::Infallible>((None,)) }),
+        )
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_player_bets_inc)
+}
+
 pub fn get_game_bets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -237,7 +251,7 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
             .or(get_game_bets(db.clone()))
             .or(get_network_bets(db.clone()))
             .or(get_all_last_bets(db.clone()))
-            .or(get_bets_for_game(db)),
+            .or(get_bets_for_game(db.clone()).or(get_player_bets_inc(db.clone()))),
     )
 }
 

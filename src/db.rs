@@ -286,6 +286,49 @@ impl DB {
         }
     }
 
+    pub async fn query_bets_for_address_inc(
+        &self,
+        player_address: &str,
+        first_id: Option<i64>,
+        page_size: i64,
+    ) -> Result<Vec<BetInfo>, sqlx::Error> {
+        match first_id {
+            None => {
+                sqlx::query_as_unchecked!(
+                    BetInfo,
+                    "
+                SELECT *
+                 FROM BetInfo
+                WHERE player = $1
+                ORDER BY timestamp ASC
+                LIMIT $2
+                ",
+                    player_address,
+                    page_size
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            Some(first_id) => {
+                sqlx::query_as_unchecked!(
+                    BetInfo,
+                    "
+                 SELECT *
+                FROM BetInfo
+                WHERE id > $1 AND player = $2
+                ORDER BY timestamp ASC
+                LIMIT $3
+                ",
+                    first_id,
+                    player_address,
+                    page_size
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
+    }
+
     pub async fn query_bets_for_game(
         &self,
         game_id: i64,

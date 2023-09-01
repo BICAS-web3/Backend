@@ -187,6 +187,7 @@ CREATE VIEW BetInfo AS
 	LEFT JOIN Nickname
         ON Bet.player = Nickname.address;
 
+CREATE INDEX last_bets_info_idx ON BetInfo(timestamp desc);
 
 CREATE TABLE IF NOT EXISTS BanWords(
     id BIGSERIAL PRIMARY KEY,

@@ -909,6 +909,111 @@
     },
     "query": "\n            SELECT *\n            FROM Token\n            WHERE contract_address = $1\n            LIMIT 1\n            "
   },
+  "ac685c558fd176d448f030cdc6a612b511934e51b9f2a5bae44f43fe46c4b614": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "transaction_hash",
+          "ordinal": 1,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "player",
+          "ordinal": 2,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "player_nickname",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "timestamp",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "game_id",
+          "ordinal": 5,
+          "type_info": "Int8"
+        },
+        {
+          "name": "game_name",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "wager",
+          "ordinal": 7,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "token_address",
+          "ordinal": 8,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "token_name",
+          "ordinal": 9,
+          "type_info": "Text"
+        },
+        {
+          "name": "network_id",
+          "ordinal": 10,
+          "type_info": "Int8"
+        },
+        {
+          "name": "network_name",
+          "ordinal": 11,
+          "type_info": "Text"
+        },
+        {
+          "name": "bets",
+          "ordinal": 12,
+          "type_info": "Int8"
+        },
+        {
+          "name": "multiplier",
+          "ordinal": 13,
+          "type_info": "Float8"
+        },
+        {
+          "name": "profit",
+          "ordinal": 14,
+          "type_info": "Numeric"
+        }
+      ],
+      "nullable": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Bpchar",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n                SELECT *\n                 FROM BetInfo\n                WHERE player = $1\n                ORDER BY timestamp ASC\n                LIMIT $2\n                "
+  },
   "d28c096c589247cda57aff2f0f4802e19ef6708c0d216dd53e340bcee17b314f": {
     "describe": {
       "columns": [],
@@ -959,6 +1064,112 @@
       }
     },
     "query": "SELECT \n                id as \"id!\",\n                network_id as \"network_id!\",\n                url as \"url!\"\n            FROM BlockExplorerUrl"
+  },
+  "d33694b7c8a261af9fcde80346a45487cfb83f17f1307b4020f36a9b9e4d0a67": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "transaction_hash",
+          "ordinal": 1,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "player",
+          "ordinal": 2,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "player_nickname",
+          "ordinal": 3,
+          "type_info": "Varchar"
+        },
+        {
+          "name": "timestamp",
+          "ordinal": 4,
+          "type_info": "Timestamp"
+        },
+        {
+          "name": "game_id",
+          "ordinal": 5,
+          "type_info": "Int8"
+        },
+        {
+          "name": "game_name",
+          "ordinal": 6,
+          "type_info": "Text"
+        },
+        {
+          "name": "wager",
+          "ordinal": 7,
+          "type_info": "Numeric"
+        },
+        {
+          "name": "token_address",
+          "ordinal": 8,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "token_name",
+          "ordinal": 9,
+          "type_info": "Text"
+        },
+        {
+          "name": "network_id",
+          "ordinal": 10,
+          "type_info": "Int8"
+        },
+        {
+          "name": "network_name",
+          "ordinal": 11,
+          "type_info": "Text"
+        },
+        {
+          "name": "bets",
+          "ordinal": 12,
+          "type_info": "Int8"
+        },
+        {
+          "name": "multiplier",
+          "ordinal": 13,
+          "type_info": "Float8"
+        },
+        {
+          "name": "profit",
+          "ordinal": 14,
+          "type_info": "Numeric"
+        }
+      ],
+      "nullable": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Bpchar",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n                 SELECT *\n                FROM BetInfo\n                WHERE id > $1 AND player = $2\n                ORDER BY timestamp ASC\n                LIMIT $3\n                "
   },
   "dc77a0f8aa66b33ae385b52fd296ac94c6aa5de1d250d17923873f62fc2fcb25": {
     "describe": {
