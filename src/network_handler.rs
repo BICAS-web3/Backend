@@ -185,13 +185,23 @@ pub async fn network_handler(
                     )
                 ),
                 network_id: game.network_id,
-                bets: decoded_data
-                    .get("numGames")
-                    .unwrap()
-                    .clone()
-                    .into_uint()
-                    .unwrap()
-                    .as_u32() as i64,
+                bets: match match decoded_data.get("numGames") {
+                    Some(t) => t,
+                    None => {
+                        error!("Could not find token `numGames`");
+                        continue;
+                    }
+                }
+                .clone()
+                .into_uint()
+                {
+                    Some(n) => n,
+                    None => {
+                        error!("Could not parse uint for `numGames`");
+                        continue;
+                    }
+                }
+                .as_u32() as i64,
                 multiplier: 1.0,
                 profit: BigDecimal::from_str(
                     &decoded_data
@@ -228,9 +238,15 @@ pub async fn network_handler(
                     profit: bet.profit.clone(),
                 };
 
-                db_sender.send(bet.clone()).unwrap();
+                if let Err(e) = db_sender.send(bet.clone()) {
+                    error!("Error sending bet to db {:?}", e);
+                    continue;
+                }
 
-                bet_sender.send(bet_info).unwrap();
+                if let Err(e) = bet_sender.send(bet_info) {
+                    error!("Error propagating bet {:?}", e);
+                    continue;
+                }
             } else {
                 error!("Token `{}` not found", &bet.token_address);
             }
@@ -240,6 +256,8 @@ pub async fn network_handler(
 
 pub async fn db_listener(mut receiver: DbReceiver, db: DB) {
     while let Some(msg) = receiver.recv().await {
-        db.place_bet(&msg).await.unwrap();
+        if let Err(e) = db.place_bet(&msg).await {
+            error!("Error placing bet {:?}", e);
+        }
     }
 }
