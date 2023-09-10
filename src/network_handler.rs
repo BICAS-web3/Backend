@@ -102,7 +102,16 @@ pub async fn network_handler(
             .address(games.iter().map(|item| item.1 .0).collect())
             .build();
 
-        let filter = web3.eth_filter().create_logs_filter(filter).await.unwrap();
+        let filter = match web3.eth_filter().create_logs_filter(filter).await {
+            Ok(f) => f,
+            Err(e) => {
+                error!(
+                    "network id `{:?}`: Error creating filter `{:?}`",
+                    network.network_id, e
+                );
+                continue;
+            }
+        };
 
         let logs_stream = filter.stream(time::Duration::from_secs(1));
         futures::pin_mut!(logs_stream);
