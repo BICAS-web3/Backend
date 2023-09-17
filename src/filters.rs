@@ -251,7 +251,7 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
             .or(get_game_bets(db.clone()))
             .or(get_network_bets(db.clone()))
             .or(get_all_last_bets(db.clone()))
-            .or(get_bets_for_game(db.clone()).or(get_player_bets_inc(db.clone()))),
+            .or(get_bets_for_game(db.clone()).or(get_player_bets_inc(db))),
     )
 }
 
