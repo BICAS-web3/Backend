@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 pub mod db_models {
     use super::*;
@@ -7,7 +8,7 @@ pub mod db_models {
     use serde_with::{serde_as, DisplayFromStr};
     use sqlx::types::BigDecimal;
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct NativeCurrency {
         pub id: i64,
         pub name: String,
@@ -15,7 +16,7 @@ pub mod db_models {
         pub decimals: i64,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Network {
         pub id: i64,
         pub name: String,
@@ -23,7 +24,7 @@ pub mod db_models {
         pub native_currency_id: i64,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct NetworkInfo {
         pub network_id: i64,
         pub network_name: String,
@@ -33,21 +34,21 @@ pub mod db_models {
         pub decimals: i64,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct RpcUrl {
         pub id: i64,
         pub network_id: i64,
         pub url: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct BlockExplorerUrl {
         pub id: i64,
         pub network_id: i64,
         pub url: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Token {
         pub id: i64,
         pub network_id: i64,
@@ -56,7 +57,7 @@ pub mod db_models {
         pub contract_address: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Game {
         pub id: i64,
         pub network_id: i64,
@@ -66,7 +67,7 @@ pub mod db_models {
         pub result_event_signature: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct GameInfo {
         pub id: i64,
         pub network_id: i64,
@@ -78,7 +79,7 @@ pub mod db_models {
         pub event_names: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Nickname {
         pub id: i64,
         /// 42 symbols
@@ -86,7 +87,7 @@ pub mod db_models {
         pub nickname: String,
     }
 
-    #[derive(Deserialize, Serialize, Default)]
+    #[derive(Deserialize, Serialize, Default, ToSchema)]
     pub struct Player {
         pub id: i64,
         /// 42 symbols
@@ -119,7 +120,7 @@ pub mod db_models {
     }
 
     #[serde_as]
-    #[derive(Deserialize, Serialize, Clone, Debug)]
+    #[derive(Deserialize, Serialize, Clone, Debug, ToSchema)]
     pub struct BetInfo {
         pub id: i64,
         pub transaction_hash: String,
@@ -141,7 +142,7 @@ pub mod db_models {
         pub profit: BigDecimal,
     }
 
-    #[derive(Deserialize, Serialize, Clone, Debug)]
+    #[derive(Deserialize, Serialize, Clone, Debug, ToSchema)]
     pub struct GameAbi {
         pub signature: String,
         pub types: String,
@@ -168,7 +169,7 @@ pub mod json_responses {
     };
     use super::*;
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, ToSchema)]
     pub enum Status {
         OK,
         Err,
@@ -184,13 +185,13 @@ pub mod json_responses {
         pub message: String,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, ToSchema)]
     pub struct JsonResponse {
         pub status: Status,
         pub body: ResponseBody,
     }
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, ToSchema)]
     #[serde(untagged)]
     pub enum ResponseBody {
         ErrorText(ErrorText),
@@ -206,37 +207,37 @@ pub mod json_responses {
         Abi(GameAbi),
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct ErrorText {
         pub error: String,
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct InfoText {
         pub message: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Networks {
         pub networks: Vec<NetworkInfo>,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Rpcs {
         pub rpcs: Vec<RpcUrl>,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct BlockExplorers {
         pub explorers: Vec<BlockExplorerUrl>,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Tokens {
         pub tokens: Vec<Token>,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Bets {
         pub bets: Vec<BetInfo>,
     }
@@ -245,19 +246,19 @@ pub mod json_responses {
 pub mod json_requests {
     use super::*;
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct SetNickname {
         pub address: String,
         pub nickname: String,
         pub signature: String,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct ByNetworkId {
         pub network_id: i64,
     }
 
-    #[derive(Deserialize, Serialize)]
+    #[derive(Deserialize, Serialize, ToSchema)]
     #[serde(tag = "type")]
     pub enum WebsocketsIncommingMessage {
         Subscribe { payload: Vec<String> },
