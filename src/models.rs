@@ -218,8 +218,15 @@ pub mod json_responses {
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct NetworkFullInfo {
+        pub basic_info: NetworkInfo,
+        pub rpcs: Vec<RpcUrl>,
+        pub explorers: Vec<BlockExplorerUrl>,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Networks {
-        pub networks: Vec<NetworkInfo>,
+        pub networks: Vec<NetworkFullInfo>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
