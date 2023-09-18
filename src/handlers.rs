@@ -13,8 +13,8 @@ use crate::models::json_requests::SetNickname;
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_responses::{
-    Bets, BlockExplorers, ErrorText, InfoText, JsonResponse, Networks, ResponseBody, Rpcs, Status,
-    Tokens,
+    Bets, BlockExplorers, ErrorText, InfoText, JsonResponse, NetworkFullInfo, Networks,
+    ResponseBody, Rpcs, Status, Tokens,
 };
 pub use abi::*;
 pub use bets::*;
@@ -87,8 +87,24 @@ pub mod network {
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
+        let mut networks_full_info: Vec<NetworkFullInfo> = Vec::with_capacity(networks.len());
+        for network in networks {
+            let network_id = network.network_id;
+            networks_full_info.push(NetworkFullInfo {
+                basic_info: network,
+                rpcs: db
+                    .query_all_rpcs(network_id)
+                    .await
+                    .map_err(|e| reject::custom(ApiError::DbError(e)))?,
+                explorers: db
+                    .query_block_explorers(network_id)
+                    .await
+                    .map_err(|e| reject::custom(ApiError::DbError(e)))?,
+            });
+        }
+
         Ok(gen_arbitrary_response(ResponseBody::Networks(Networks {
-            networks,
+            networks: networks_full_info,
         })))
     }
 }

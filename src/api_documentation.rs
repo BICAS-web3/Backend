@@ -45,6 +45,7 @@ use warp::{
             json_responses::BlockExplorers,
             json_responses::Tokens,
             json_responses::Bets,
+            json_responses::NetworkFullInfo,
             json_responses::Networks,
             db_models::BetInfo,
             db_models::BlockExplorerUrl,
