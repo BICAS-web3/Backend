@@ -2,7 +2,7 @@ use crate::{
     config::DatabaseSettings,
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, NetworkInfo, Nickname, Player,
-        RpcUrl, Token,
+        RpcUrl, Token, Totals,
     },
 };
 
@@ -70,6 +70,55 @@ impl DB {
         )
         .fetch_all(&self.db_pool)
         .await
+    }
+
+    pub async fn get_unique_tokens(&self, network_id: i64) -> Result<Vec<Token>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Token,
+            r#"
+            SELECT DISTINCT name,
+                contract_address,
+                id, 
+                network_id
+            FROM Token
+            WHERE network_id = $1
+            "#,
+            network_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_totals(&self) -> Result<Totals, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Totals,
+            r#"
+            SELECT * FROM totals;
+            "#,
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn change_token_price(
+        &self,
+        token_name: &str,
+        new_price: f64,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "
+            INSERT INTO TokenPrice(token_name, price)
+            VALUES ($1, $2)
+            ON CONFLICT(token_name) DO UPDATE
+                SET price = excluded.price
+            ",
+            token_name,
+            new_price,
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn query_block_explorers(

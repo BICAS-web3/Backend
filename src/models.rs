@@ -8,6 +8,20 @@ pub mod db_models {
     use serde_with::{serde_as, DisplayFromStr};
     use sqlx::types::BigDecimal;
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
+    pub struct TokenPrice {
+        pub id: i64,
+        pub token_name: String,
+        pub price: f64,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Totals {
+        pub bets_amount: i64,
+        pub player_amount: i64,
+        pub sum: f64,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct NativeCurrency {
         pub id: i64,
@@ -24,7 +38,7 @@ pub mod db_models {
         pub native_currency_id: i64,
     }
 
-    #[derive(Deserialize, Serialize, ToSchema)]
+    #[derive(Deserialize, Serialize, ToSchema, Clone)]
     pub struct NetworkInfo {
         pub network_id: i64,
         pub network_name: String,
@@ -166,6 +180,7 @@ pub mod json_responses {
 
     use super::db_models::{
         BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, RpcUrl, Token,
+        Totals,
     };
     use super::*;
 
@@ -205,6 +220,7 @@ pub mod json_responses {
         Player(Player),
         Bets(Bets),
         Abi(GameAbi),
+        Totals(Totals),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

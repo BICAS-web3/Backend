@@ -73,6 +73,14 @@ CREATE TABLE IF NOT EXISTS Token(
 CREATE UNIQUE INDEX token_network_id_idx ON Token(network_id, contract_address);
 CREATE INDEX token_idx ON Token(contract_address);
 
+CREATE TABLE IF NOT EXISTS TokenPrice(
+    id BIGSERIAL PRIMARY KEY,
+    token_name TEXT NOT NULL,
+    price DOUBLE PRECISION
+);
+
+CREATE UNIQUE INDEX token_price_idx ON TokenPrice(token_name);
+
 CREATE TABLE IF NOT EXISTS GameAbi(
     signature character(66) NOT NULL PRIMARY KEY,
     types TEXT NOT NULL,
@@ -161,6 +169,21 @@ CREATE INDEX bet_game_idx ON Bet(game_id);
 CREATE INDEX bet_idx ON Bet(player, game_id);
 CREATE INDEX last_bets_idx ON Bet(timestamp desc);
 
+
+CREATE TABLE IF NOT EXISTS PancakeAddress(
+    id BIGSERIAL PRIMARY KEY,
+    address TEXT NOT NULL,
+    usdt_address TEXT NOT NULL,
+    network_id BIGINT NOT NULL,
+
+
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
+)
+
+CREATE UNIQUE INDEX pancake_idx ON PancakeAddress(network_id);
+
 CREATE VIEW BetInfo AS 
     SELECT Bet.id as id,
             Bet.transaction_hash as transaction_hash,
@@ -188,6 +211,22 @@ CREATE VIEW BetInfo AS
         ON Bet.player = Nickname.address;
 
 CREATE INDEX last_bets_info_idx ON BetInfo(timestamp desc);
+
+CREATE VIEW Totals AS
+    SELECT 
+        COUNT(bet.id) AS bets_amount,
+        COUNT(DISTINCT bet.player) AS player_amount,
+        (SELECT 
+            SUM((bet.wager/1000000000000000000)*price.price)
+                from bet
+                INNER JOIN (SELECT 
+                    token.name AS name,
+                    token.contract_address AS address,
+                    tokenprice.price AS price
+    FROM token
+    INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+            ON bet.token_address = price.address)
+    FROM bet;
 
 CREATE TABLE IF NOT EXISTS BanWords(
     id BIGSERIAL PRIMARY KEY,
