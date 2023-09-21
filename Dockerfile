@@ -1,11 +1,9 @@
-FROM rust:1.67 as builder
-
-WORKDIR /usr/src/Backend
+FROM rust:latest as builder
+WORKDIR /Backend
 COPY . .
 
-RUN cargo install --path .
+RUN cargo build --release
 
-FROM debian:bullseye-slim
-RUN apt-get update && apt-get install -y libssl-dev && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/cargo/bin/Backend /usr/local/bin/Backend
-CMD ["backend"]
+EXPOSE 8282
+
+CMD ["./target/release/backend"]
