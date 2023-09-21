@@ -301,10 +301,12 @@ pub async fn token_price_handler(
                 let token_price =
                     Decimal::from(amount[1].as_u128()) / Decimal::from(1000000000000000000u64);
 
+                let token_price = (token_price * bnb_price).to_f64().unwrap();
+
                 if let Err(e) = db_sender.send(DbMessage::NewPrice(TokenPrice {
                     id: 0,
                     token_name: token.name.clone(),
-                    price: token_price.to_f64().unwrap(),
+                    price: token_price,
                 })) {
                     error!(
                         "Error getting price for {:?}: {:?}",
@@ -313,7 +315,7 @@ pub async fn token_price_handler(
                     continue;
                 }
 
-                debug!("{:?} price: {:?}", token.name, token_price * bnb_price);
+                debug!("{:?} price: {:?}", token.name, token_price);
             }
             sleep(Duration::from_secs(180)).await;
         }
