@@ -1,5 +1,5 @@
-use crate::communication::BetReceiver;
-use crate::communication::BetSender;
+use crate::communication::WsDataFeedReceiver;
+use crate::communication::WsDataFeedSender;
 use crate::db::DB;
 use crate::errors::ApiError;
 use crate::handlers;
@@ -13,8 +13,8 @@ fn with_db(db: DB) -> impl Filter<Extract = (DB,), Error = std::convert::Infalli
 }
 
 fn with_channel(
-    ch: BetSender,
-) -> impl Filter<Extract = (BetReceiver,), Error = std::convert::Infallible> + Clone {
+    ch: WsDataFeedSender,
+) -> impl Filter<Extract = (WsDataFeedReceiver,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || ch.subscribe())
 }
 
@@ -255,6 +255,20 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     )
 }
 
+// GENERAL
+pub fn get_totals(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("totals")
+        .and(with_db(db))
+        .and_then(handlers::get_totals)
+}
+pub fn general(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("general").and(get_totals(db))
+}
+
 // pub fn get_full_game(
 //     db: DB,
 // ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone{
@@ -265,24 +279,8 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 
 pub fn init_filters(
     db: DB,
-    bet_sender: BetSender,
+    bet_sender: WsDataFeedSender,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    //get_networks(db.clone())
-    // .or(get_rpcs(db.clone()))
-    // .or(get_block_explorers(db.clone()))
-    // .or(get_tokens(db.clone()))
-    // .or(get_game(db.clone()))
-    // .or(get_nickname(db.clone()))
-    // .or(set_nickname(db.clone()))
-    // .or(get_player(db.clone()))
-    // .or(get_player_bets(db.clone()))
-    // .or(get_game_bets(db.clone()))
-    // .or(get_network_bets(db.clone()))
-    // .or(get_abi(db.clone()))
-    // .or(get_all_last_bets(db.clone()))
-    // .or(get_all_explorers(db.clone()))
-    // .or(get_game_by_id(db.clone()))
-    // .or(get_bets_for_game(db.clone()))
     network(db.clone())
         .or(rpc(db.clone()))
         .or(block_explorer(db.clone()))
@@ -291,6 +289,7 @@ pub fn init_filters(
         .or(player(db.clone()))
         .or(abi(db.clone()))
         .or(bets(db.clone()))
+        .or(general(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

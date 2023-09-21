@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
-use crate::communication::BetReceiver;
+use crate::communication::WsDataFeedReceiver;
 use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
@@ -22,6 +22,7 @@ pub use block_explorers::*;
 use futures::stream::SplitStream;
 use futures::{SinkExt, StreamExt};
 pub use game::*;
+pub use general::*;
 pub use network::*;
 pub use nickname::*;
 pub use player::*;
@@ -485,6 +486,31 @@ pub mod abi {
     }
 }
 
+pub mod general {
+    use super::*;
+
+    /// Get totals
+    ///
+    /// Gets total bets, wagered sum, players
+    #[utoipa::path(
+        tag="general",
+        get,
+        path = "/api/general/totals",
+        responses(
+            (status = 200, description = "Totals", body = Totals),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_totals(db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let totals = db
+            .get_totals()
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Totals(totals)))
+    }
+}
+
 pub async fn websockets_subscriptions_reader(
     mut socket: SplitStream<WebSocket>,
     subscriptions_propagation: UnboundedSender<WebsocketsIncommingMessage>,
@@ -524,7 +550,7 @@ pub async fn websockets_subscriptions_reader(
     }
 }
 
-pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: BetReceiver) {
+pub async fn websockets_handler(socket: WebSocket, db: DB, mut channel: WsDataFeedReceiver) {
     debug!("New connection {:?}", &socket);
     let (mut ws_tx, ws_rx) = socket.split();
     let mut subscriptions: HashSet<String> = Default::default();

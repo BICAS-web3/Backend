@@ -198,6 +198,19 @@
     },
     "query": "\n            SELECT *\n            FROM GameInfo\n            WHERE network_id = $1\n            "
   },
+  "3c42f0e6471cbbc0ef45db4d705e2d6c92687530dd67f0b42a1ae2fd5c201f9e": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Float8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO TokenPrice(token_name, price)\n            VALUES ($1, $2)\n            ON CONFLICT(token_name) DO UPDATE\n                SET price = excluded.price\n            "
+  },
   "3ef38d13cc7144475dd4f6cae3a48b997677d2af7955871c924b3d384367ab07": {
     "describe": {
       "columns": [
@@ -734,6 +747,44 @@
     },
     "query": "\n            SELECT *\n            FROM BetInfo\n            WHERE game_id IN (\n                SELECT id \n                FROM Game \n                WHERE network_id = $1)\n            ORDER BY timestamp DESC\n            LIMIT $2\n            "
   },
+  "73176c3fd73f67f51eb525170e2b7e215f11705f7c0cafcc4ef0c5739c148558": {
+    "describe": {
+      "columns": [
+        {
+          "name": "name",
+          "ordinal": 0,
+          "type_info": "Text"
+        },
+        {
+          "name": "contract_address",
+          "ordinal": 1,
+          "type_info": "Bpchar"
+        },
+        {
+          "name": "id",
+          "ordinal": 2,
+          "type_info": "Int8"
+        },
+        {
+          "name": "network_id",
+          "ordinal": 3,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT DISTINCT name,\n                contract_address,\n                id, \n                network_id\n            FROM Token\n            WHERE network_id = $1\n            "
+  },
   "8d23b1263131c4fa79e35302e542892d7b765aec7bb32fa32713bb4d6f1235bd": {
     "describe": {
       "columns": [
@@ -1013,6 +1064,36 @@
       }
     },
     "query": "\n                SELECT *\n                 FROM BetInfo\n                WHERE player = $1\n                ORDER BY timestamp ASC\n                LIMIT $2\n                "
+  },
+  "c9a298601585a2bb8144e4c744ffd7a5d7c38c2f92ac303fb17badda9c8cf02a": {
+    "describe": {
+      "columns": [
+        {
+          "name": "bets_amount",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "player_amount",
+          "ordinal": 1,
+          "type_info": "Int8"
+        },
+        {
+          "name": "sum",
+          "ordinal": 2,
+          "type_info": "Float8"
+        }
+      ],
+      "nullable": [
+        true,
+        true,
+        true
+      ],
+      "parameters": {
+        "Left": []
+      }
+    },
+    "query": "\n            SELECT * FROM totals;\n            "
   },
   "d28c096c589247cda57aff2f0f4802e19ef6708c0d216dd53e340bcee17b314f": {
     "describe": {

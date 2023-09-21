@@ -73,10 +73,16 @@ async fn main() {
         *config::SERVER_PORT
     );
 
-    let (bet_sender, _bet_receiver) = channel(10000);
+    let (bet_sender, bet_receiver) = channel(10000);
+    let (ws_data_feed, _bet_receiver) = channel(10000);
 
     info!("Staring networks handlers");
     network_handler::start_network_handlers(db.clone(), bet_sender.clone()).await;
+    tokio::spawn(network_handler::bet_listener(
+        db.clone(),
+        bet_receiver,
+        ws_data_feed.clone(),
+    ));
 
     // api UI
     let api_config = Arc::new(Config::from("/api/api-doc.json"));
@@ -93,7 +99,7 @@ async fn main() {
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
         _ = warp::serve(
-            filters::init_filters(db, bet_sender).or(api_doc)
+            filters::init_filters(db, ws_data_feed).or(api_doc)
             .or(swagger_ui).recover(handle_rejection), //.with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},
