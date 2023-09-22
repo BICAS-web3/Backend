@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS PancakeAddress(
     CONSTRAINT fk_network
         FOREIGN KEY(network_id)
             REFERENCES Network(id)
-)
+);
 
 CREATE UNIQUE INDEX pancake_idx ON PancakeAddress(network_id);
 
@@ -212,8 +212,6 @@ CREATE VIEW BetInfo AS
 	LEFT JOIN Nickname
         ON Bet.player = Nickname.address;
 
-CREATE INDEX last_bets_info_idx ON BetInfo(timestamp desc);
-
 CREATE VIEW Totals AS
     SELECT 
         COUNT(bet.id) AS bets_amount,
@@ -234,3 +232,117 @@ CREATE TABLE IF NOT EXISTS BanWords(
     id BIGSERIAL PRIMARY KEY,
     word TEXT
 );
+
+
+-- INITIAL DATA
+
+-- nativecurrency
+INSERT INTO public.nativecurrency(
+	name, symbol, decimals)
+	VALUES ('ETH', 'ETH', 18);
+INSERT INTO public.nativecurrency(
+	name, symbol, decimals)
+	VALUES ('BNB', 'BNB', 18);
+INSERT INTO public.nativecurrency(
+	name, symbol, decimals)
+	VALUES ('ETH', 'ETH', 18);
+
+-- network
+INSERT INTO public.network(
+	id, name, short_name, native_currency_id)
+	VALUES (97, 'BSC TestNet', 'BSCT', 2);
+INSERT INTO public.network(
+	id, name, short_name, native_currency_id)
+	VALUES (5, 'Goerli', 'Goerli', 3);
+INSERT INTO public.network(
+	id, name, short_name, native_currency_id)
+	VALUES (56, 'Binance smart chain', 'BSC', 2);
+
+-- rpc
+INSERT INTO public.rpcurl(
+	network_id, url)
+	VALUES (97, 'https://data-seed-prebsc-1-s1.binance.org:8545');
+INSERT INTO public.rpcurl(
+	network_id, url)
+	VALUES (5, 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161');
+
+-- blockexplorer
+INSERT INTO public.blockexplorerurl(
+	network_id, url)
+	VALUES (97, 'https://testnet.bscscan.com');
+INSERT INTO public.blockexplorerurl(
+	network_id, url)
+	VALUES (5, 'https://goerli.etherscan.io');
+
+-- token
+INSERT INTO public.token(
+	network_id, name, contract_address)
+	VALUES (97, 'DRAX', '0xbdc4e7171743f6f1b52b6a7d479ed32d8ffcf018');
+INSERT INTO public.token(
+	network_id, name, contract_address)
+	VALUES (5, 'DRAX', '0xa9a9a2f699537806197baa5e0ba2f0ec4336c825');
+INSERT INTO public.token(
+	network_id, name, contract_address)
+	VALUES (56, 'DRAX', '0x7f7f49b6128f7cb89baab704f6ea1662a270455b');
+
+-- pancakeaddress
+INSERT INTO public.pancakeaddress(
+	address, usdt_address, network_id)
+	VALUES ('0x10ED43C718714eb63d5aA57B78B54704E256024E', '0x55d398326f99059fF775485246999027B3197955', '97');
+
+-- gameabi
+INSERT INTO public.gameabi(
+	signature, types, names)
+	VALUES (
+        '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004', 
+        '["uint256", "uint256", "address", "uint8[]", "uint256[]", "uint32"]', 
+        'wager payout tokenAddress coinOutcomes payouts numGames'
+    );
+INSERT INTO public.gameabi(
+	signature, types, names)
+	VALUES (
+        '0x090dbd65630d04a5178ecb9346e0cdcc299215a135c6eb7ecd530ce00dfa44d2', 
+        '["uint256","uint256","address","uint256[]","uint256[]","uint32"]', 
+        'wager payout tokenAddress diceOutcomes payouts numGames'
+    );
+INSERT INTO public.gameabi(
+	signature, types, names)
+	VALUES (
+        '0x10926c19b020b305e529b4fbe64764ce71360378f742c3e3d04e62d586bf9c0e', 
+        '["uint256","uint256","address","uint8[]","uint8[]","uint256[]","uint32"]', 
+        'wager payout tokenAddress outcomes randomActions payouts numGames'
+    );
+
+-- game
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        97,
+        'CoinFlip',
+        '0xa81bbcb6807fb63c0e7dbb1289ef5fe02410b512', 
+        '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004'
+    );
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        5,
+        'CoinFlip',
+        '0x1c5e8342A3c8a11c4726C7eA5E63CDF93c00B93C', 
+        '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004'
+    );
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        5,
+        'Dice',
+        '0x5070ac920B5c19aC5b87EE0E355D9c690be0bd46', 
+        '0x090dbd65630d04a5178ecb9346e0cdcc299215a135c6eb7ecd530ce00dfa44d2'
+    );
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        5,
+        'RockPaperScissors',
+        '0x02C3284378488eF235fE04D5E2E5Af4e36b5dCf4', 
+        '0x10926c19b020b305e529b4fbe64764ce71360378f742c3e3d04e62d586bf9c0e'
+    );

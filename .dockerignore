@@ -1,0 +1,7 @@
+.vscode
+.github
+db_scheme
+Cargo.lock
+test.py
+.gitignore
+target
