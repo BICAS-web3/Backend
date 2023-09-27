@@ -162,12 +162,21 @@ pub fn get_player(
         .and_then(handlers::get_player)
 }
 
+pub fn get_latest_games(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("latest_games" / String)
+        .and(with_db(db))
+        .and_then(handlers::get_latest_games)
+}
+
 pub fn player(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("player").and(
         get_player(db.clone())
-            .or(warp::path("nickname").and(get_nickname(db.clone()).or(set_nickname(db)))),
+            .or(warp::path("nickname").and(get_nickname(db.clone()).or(set_nickname(db.clone()))))
+            .or(get_latest_games(db)),
     )
 }
 

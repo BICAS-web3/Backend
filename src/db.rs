@@ -1,8 +1,8 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, NetworkInfo, Nickname, Player,
-        RpcUrl, Token, Totals,
+        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LatestGames, NetworkInfo,
+        Nickname, Player, RpcUrl, Token, Totals,
     },
 };
 
@@ -87,6 +87,20 @@ impl DB {
         )
         .fetch_all(&self.db_pool)
         .await
+    }
+
+    pub async fn get_latest_games(&self, address: &str) -> Result<Vec<String>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            LatestGames,
+            r#"
+            SELECT game.name FROM game RIGHT JOIN 
+                (SELECT * from bet where bet.player=$1 LIMIT 2) as bets ON bets.game_id = game.id
+            "#,
+            address
+        )
+        .fetch_all(&self.db_pool)
+        .await
+        .map(|games| games.into_iter().map(|game| game.name).collect())
     }
 
     pub async fn get_totals(&self) -> Result<Totals, sqlx::Error> {

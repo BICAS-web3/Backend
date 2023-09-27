@@ -32,7 +32,9 @@ use warp::{
             handlers::get_player_bets,
             handlers::get_player_bets_inc,
             handlers::get_all_last_bets,
-            handlers::get_bets_for_game
+            handlers::get_bets_for_game,
+            handlers::get_latest_games,
+            handlers::get_totals,
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -47,6 +49,8 @@ use warp::{
             json_responses::Bets,
             json_responses::NetworkFullInfo,
             json_responses::Networks,
+            json_responses::LatestGames,
+            db_models::Totals,
             db_models::BetInfo,
             db_models::BlockExplorerUrl,
             db_models::Game,
