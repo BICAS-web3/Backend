@@ -19,7 +19,7 @@ pub mod db_models {
     pub struct Totals {
         pub bets_amount: i64,
         pub player_amount: i64,
-        pub sum: f64,
+        pub sum: Option<f64>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

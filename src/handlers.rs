@@ -38,10 +38,7 @@ use warp::Reply;
 use warp::{reject, reply::Response as WarpResponse};
 
 fn get_response_status_json<T: Serialize>(status_code: StatusCode, message: T) -> impl warp::Reply {
-    Ok(warp::reply::with_status(
-        warp::reply::json(&message),
-        status_code,
-    ))
+    warp::reply::with_status(warp::reply::json(&message), status_code)
 }
 
 pub fn gen_info_response(info: &str) -> WarpResponse {
