@@ -837,6 +837,32 @@
     },
     "query": "SELECT \n                id as \"id!\",\n                network_id as \"network_id!\",\n                url as \"url!\"\n            FROM RpcUrl \n            WHERE network_id = $1"
   },
+  "9abf99bafd42eb458bbdd3e72170445b8eca90217db30d4944b9754989d8fd06": {
+    "describe": {
+      "columns": [
+        {
+          "name": "bets_amount",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "total_wagered_sum",
+          "ordinal": 1,
+          "type_info": "Float8"
+        }
+      ],
+      "nullable": [
+        null,
+        null
+      ],
+      "parameters": {
+        "Left": [
+          "Bpchar"
+        ]
+      }
+    },
+    "query": "\n            SELECT \n                    COUNT(bet.id) AS bets_amount,\n                    (SELECT \n                        SUM((bet.wager/1000000000000000000)*price.price) as total_wagered_sum\n                            from bet\n                            INNER JOIN (SELECT \n                                token.name AS name,\n                                token.contract_address AS address,\n                                tokenprice.price AS price\n                        FROM token\n                        INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price\n                            ON bet.token_address = price.address\n                        WHERE bet.player=$1)\n            FROM bet WHERE bet.player=$1;\n            "
+  },
   "a2820119fc53aa2716c297752395b582474b2d3a778103dbc9ded55f0ab69437": {
     "describe": {
       "columns": [
