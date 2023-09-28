@@ -314,6 +314,8 @@ pub mod nickname {
 }
 
 pub mod player {
+    use crate::models::json_responses::LatestGames;
+
     use super::*;
     /// Get user by address
     ///
@@ -341,6 +343,37 @@ pub mod player {
             });
 
         Ok(gen_arbitrary_response(ResponseBody::Player(player)))
+    }
+
+    /// Get latest games of the user
+    ///
+    /// Gets 2 latest games played by a user
+    #[utoipa::path(
+        tag="player",
+        get,
+        path = "/api/player/latest_games/{address}",
+        responses(
+            (status = 200, description = "Latest games", body = LatestGames),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("address" = String, Path, description = "User address")
+        ),
+    )]
+    pub async fn get_latest_games(
+        address: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let latest_games = db
+            .get_latest_games(&address)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::LatestGames(
+            LatestGames {
+                games: latest_games,
+            },
+        )))
     }
 }
 

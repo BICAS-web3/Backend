@@ -94,6 +94,11 @@ pub mod db_models {
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct LatestGames {
+        pub name: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Nickname {
         pub id: i64,
         /// 42 symbols
@@ -221,6 +226,7 @@ pub mod json_responses {
         Bets(Bets),
         Abi(GameAbi),
         Totals(Totals),
+        LatestGames(LatestGames),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -231,6 +237,11 @@ pub mod json_responses {
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct InfoText {
         pub message: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct LatestGames {
+        pub games: Vec<String>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
