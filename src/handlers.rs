@@ -342,6 +342,18 @@ pub mod player {
         Ok(gen_arbitrary_response(ResponseBody::Player(player)))
     }
 
+    pub async fn get_player_totals(
+        address: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let totals = db
+            .query_player_totals(&address)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::PlayerTotals(totals)))
+    }
+
     /// Get latest games of the user
     ///
     /// Gets 2 latest games played by a user

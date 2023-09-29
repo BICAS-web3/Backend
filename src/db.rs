@@ -2,7 +2,7 @@ use crate::{
     config::DatabaseSettings,
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LatestGames, NetworkInfo,
-        Nickname, Player, RpcUrl, Token, Totals,
+        Nickname, Player, PlayerTotals, RpcUrl, Token, Totals,
     },
 };
 
@@ -523,6 +523,31 @@ impl DB {
             SELECT * FROM GameAbi WHERE signature=$1 LIMIT 1
             ",
             signature
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn query_player_totals(&self, address: &str) -> Result<PlayerTotals, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            PlayerTotals,
+            r#"
+            SELECT 
+                    COUNT(bet.id) AS bets_amount,
+                    (SELECT 
+                        SUM((bet.wager/1000000000000000000)*price.price) as total_wagered_sum
+                            from bet
+                            INNER JOIN (SELECT 
+                                token.name AS name,
+                                token.contract_address AS address,
+                                tokenprice.price AS price
+                        FROM token
+                        INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                            ON bet.token_address = price.address
+                        WHERE bet.player=$1)
+            FROM bet WHERE bet.player=$1;
+            "#,
+            address
         )
         .fetch_one(&self.db_pool)
         .await

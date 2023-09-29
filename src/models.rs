@@ -15,6 +15,12 @@ pub mod db_models {
         pub price: f64,
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
+    pub struct PlayerTotals {
+        pub bets_amount: i64,
+        pub total_wagered_sum: Option<f64>,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct Totals {
         pub bets_amount: i64,
@@ -184,8 +190,8 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, RpcUrl, Token,
-        Totals,
+        BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, PlayerTotals,
+        RpcUrl, Token, Totals,
     };
     use super::*;
 
@@ -227,6 +233,7 @@ pub mod json_responses {
         Abi(GameAbi),
         Totals(Totals),
         LatestGames(LatestGames),
+        PlayerTotals(PlayerTotals),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
