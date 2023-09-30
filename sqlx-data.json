@@ -110,6 +110,38 @@
     },
     "query": "SELECT \n                network_id AS \"network_id!\",\n                network_name AS \"network_name!\",\n                short_name AS \"short_name!\",\n                currency_name AS \"currency_name!\",\n                currency_symbol AS \"currency_symbol!\",\n                decimals as \"decimals!\"\n            FROM NetworkInfo"
   },
+  "2c4869f0c59b942ef0736b14bdc41458ac5b86224adb99057e033a071f74d74b": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "token_name",
+          "ordinal": 1,
+          "type_info": "Text"
+        },
+        {
+          "name": "price",
+          "ordinal": 2,
+          "type_info": "Float8"
+        }
+      ],
+      "nullable": [
+        false,
+        false,
+        true
+      ],
+      "parameters": {
+        "Left": [
+          "Text"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM tokenprice WHERE token_name=$1 LIMIT 1\n            "
+  },
   "2cc72026e500aff55ca92bb883dfeded305b5af2f49c486bff2a7e473a5a7867": {
     "describe": {
       "columns": [

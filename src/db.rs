@@ -2,7 +2,7 @@ use crate::{
     config::DatabaseSettings,
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LatestGames, NetworkInfo,
-        Nickname, Player, PlayerTotals, RpcUrl, Token, Totals,
+        Nickname, Player, PlayerTotals, RpcUrl, Token, TokenPrice, Totals,
     },
 };
 
@@ -133,6 +133,21 @@ impl DB {
         .await?;
 
         Ok(())
+    }
+
+    pub async fn query_token_price(
+        &self,
+        token_name: &str,
+    ) -> Result<Option<TokenPrice>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            TokenPrice,
+            r#"
+            SELECT * FROM tokenprice WHERE token_name=$1 LIMIT 1
+            "#,
+            token_name
+        )
+        .fetch_optional(&self.db_pool)
+        .await
     }
 
     pub async fn query_block_explorers(

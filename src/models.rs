@@ -234,6 +234,7 @@ pub mod json_responses {
         Totals(Totals),
         LatestGames(LatestGames),
         PlayerTotals(PlayerTotals),
+        TokenPrice(TokenPrice),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -249,6 +250,11 @@ pub mod json_responses {
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct LatestGames {
         pub games: Vec<String>,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct TokenPrice {
+        pub token_price: f64,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

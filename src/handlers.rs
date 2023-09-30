@@ -14,7 +14,7 @@ use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_responses::{
     Bets, BlockExplorers, ErrorText, InfoText, JsonResponse, NetworkFullInfo, Networks,
-    ResponseBody, Rpcs, Status, Tokens,
+    ResponseBody, Rpcs, Status, TokenPrice, Tokens,
 };
 pub use abi::*;
 pub use bets::*;
@@ -203,6 +203,33 @@ pub mod token {
         Ok(gen_arbitrary_response(ResponseBody::Tokens(Tokens {
             tokens,
         })))
+    }
+
+    #[utoipa::path(
+        tag="token",
+        get,
+        path = "/api/token/price/{token_name}",
+        responses(
+            (status = 200, description = "Token price", body = TokenPrice),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("token_name" = String, Path, description = "Name of the token, always uppercase")
+        ),
+    )]
+    pub async fn get_token_price(
+        token_name: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let price = db
+            .query_token_price(&token_name)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?
+            .map_or(0.0f64, |price| price.price);
+
+        Ok(gen_arbitrary_response(ResponseBody::TokenPrice(
+            TokenPrice { token_price: price },
+        )))
     }
 }
 
