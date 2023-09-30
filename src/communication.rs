@@ -1,6 +1,7 @@
 pub use tokio::sync::broadcast::{channel, Receiver, Sender};
 
 use crate::models::db_models::{Bet, BetInfo, TokenPrice};
+use crate::models::json_responses::BetInfoResponse;
 
 pub use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
@@ -11,7 +12,7 @@ pub enum DbMessage {
 
 #[derive(Debug, Clone)]
 pub struct PropagatedBet {
-    pub bet: Bet,
+    pub bet: BetInfoResponse,
     pub game_name: String,
     pub network_name: String,
 }
@@ -22,5 +23,5 @@ pub type DbSender = UnboundedSender<DbMessage>;
 pub type BetReceiver = Receiver<PropagatedBet>;
 pub type BetSender = Sender<PropagatedBet>;
 
-pub type WsDataFeedReceiver = Receiver<BetInfo>;
-pub type WsDataFeedSender = Sender<BetInfo>;
+pub type WsDataFeedReceiver = Receiver<BetInfoResponse>;
+pub type WsDataFeedSender = Sender<BetInfoResponse>;

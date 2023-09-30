@@ -142,6 +142,7 @@ pub mod db_models {
         pub multiplier: f64,
         #[serde_as(as = "DisplayFromStr")]
         pub profit: BigDecimal,
+        //pub player_hand: Option<[Card; 5]>,
     }
 
     #[serde_as]
@@ -165,6 +166,7 @@ pub mod db_models {
         pub multiplier: f64,
         #[serde_as(as = "DisplayFromStr")]
         pub profit: BigDecimal,
+        //pub player_hand: Option<[Card; 5]>,
     }
 
     #[derive(Deserialize, Serialize, Clone, Debug, ToSchema)]
@@ -190,10 +192,14 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, PlayerTotals,
+        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, PlayerTotals,
         RpcUrl, Token, Totals,
     };
     use super::*;
+    use chrono::serde::ts_seconds;
+    use chrono::{DateTime, Utc};
+    use serde_with::{serde_as, DisplayFromStr};
+    use sqlx::types::BigDecimal;
 
     #[derive(Serialize, Deserialize, ToSchema)]
     pub enum Status {
@@ -283,6 +289,142 @@ pub mod json_responses {
     pub struct Tokens {
         pub tokens: Vec<Token>,
     }
+
+    #[serde_as]
+    #[derive(Deserialize, Serialize, Clone, Debug)]
+    pub struct Card {
+        pub number: u8,
+        pub suit: u8,
+    }
+
+    #[serde_as]
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct BetInfoResponse {
+        pub id: i64,
+        pub transaction_hash: String,
+        pub player: String,
+        pub player_nickname: Option<String>,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub game_id: i64,
+        pub game_name: String,
+        #[serde_as(as = "DisplayFromStr")]
+        pub wager: BigDecimal,
+        pub token_address: String,
+        pub token_name: String,
+        pub network_id: i64,
+        pub network_name: String,
+        pub bets: i64,
+        pub multiplier: f64,
+        #[serde_as(as = "DisplayFromStr")]
+        pub profit: BigDecimal,
+        pub player_hand: Option<Vec<Card>>,
+    }
+
+    impl From<BetInfo> for BetInfoResponse {
+        fn from(value: BetInfo) -> Self {
+            BetInfoResponse {
+                id: value.id,
+                transaction_hash: value.transaction_hash,
+                player: value.player,
+                player_nickname: value.player_nickname,
+                timestamp: value.timestamp,
+                game_id: value.game_id,
+                game_name: value.game_name,
+                wager: value.wager,
+                token_address: value.token_address,
+                token_name: value.token_name,
+                network_id: value.network_id,
+                network_name: value.network_name,
+                bets: value.bets,
+                multiplier: value.multiplier,
+                profit: value.profit,
+                player_hand: None,
+            }
+        }
+    }
+
+    impl From<BetInfoResponse> for BetInfo {
+        fn from(value: BetInfoResponse) -> Self {
+            BetInfo {
+                id: value.id,
+                transaction_hash: value.transaction_hash,
+                player: value.player,
+                player_nickname: value.player_nickname,
+                timestamp: value.timestamp,
+                game_id: value.game_id,
+                game_name: value.game_name,
+                wager: value.wager,
+                token_address: value.token_address,
+                token_name: value.token_name,
+                network_id: value.network_id,
+                network_name: value.network_name,
+                bets: value.bets,
+                multiplier: value.multiplier,
+                profit: value.profit,
+            }
+        }
+    }
+
+    impl From<Bet> for BetInfoResponse {
+        fn from(value: Bet) -> Self {
+            BetInfoResponse {
+                id: value.id,
+                transaction_hash: value.transaction_hash,
+                player: value.player,
+                player_nickname: Default::default(),
+                timestamp: value.timestamp,
+                game_id: value.game_id,
+                game_name: Default::default(),
+                wager: value.wager,
+                token_address: value.token_address,
+                token_name: Default::default(),
+                network_id: value.network_id,
+                network_name: Default::default(),
+                bets: value.bets,
+                multiplier: value.multiplier,
+                profit: value.profit,
+                player_hand: None,
+            }
+        }
+    }
+    impl From<BetInfoResponse> for Bet {
+        fn from(value: BetInfoResponse) -> Self {
+            Bet {
+                id: value.id,
+                transaction_hash: value.transaction_hash,
+                player: value.player,
+                timestamp: value.timestamp,
+                game_id: value.game_id,
+                wager: value.wager,
+                token_address: value.token_address,
+                network_id: value.network_id,
+                bets: value.bets,
+                multiplier: value.multiplier,
+                profit: value.profit,
+            }
+        }
+    }
+
+    // #[serde_as]
+    // #[derive(Deserialize, Serialize, Clone, Debug)]
+    // pub struct BetIntermidiate {
+    //     pub id: i64,
+    //     pub transaction_hash: String,
+    //     pub player: String,
+    //     #[serde(with = "ts_seconds")]
+    //     pub timestamp: DateTime<Utc>,
+    //     pub game_id: i64,
+    //     #[serde_as(as = "DisplayFromStr")]
+    //     pub wager: BigDecimal,
+    //     pub token_address: String,
+    //     pub network_id: i64,
+    //     pub bets: i64,
+    //     pub multiplier: f64,
+    //     #[serde_as(as = "DisplayFromStr")]
+    //     pub profit: BigDecimal,
+    //     //pub player_hand: Option<[Card; 5]>,
+    // }
 
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct Bets {
