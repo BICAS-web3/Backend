@@ -96,6 +96,14 @@ pub fn block_explorer(
 }
 
 // TOKENS
+pub fn get_token_price(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("price" / String)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::get_token_price)
+}
 pub fn get_tokens(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -108,7 +116,7 @@ pub fn get_tokens(
 pub fn token(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("token").and(get_tokens(db))
+    warp::path("token").and(get_tokens(db.clone()).or(get_token_price(db)))
 }
 
 // GAMES

@@ -42,6 +42,6 @@ pub mod tests {
 
     #[test]
     fn verify_signature_test() {
-        assert!(verify_signature(&"0x5C0369359155C836F5D02f1D77fc11F637DBbF2b".to_lowercase(), "Sewer", "d734986394109a62815fe958484fcc9f55dc9a5fed1c43bbfec6fdebaf4cb41d3d344021f4e88c6a35bf0ef381a6e6e6e279f52f398365f25b10eb8bb7fda1921c"))
+        assert!(verify_signature(&"0x67adcf8c25c88af0df3cab522c9dd5b11d017aca".to_lowercase(), "SewerTT", "c4dfdf84509168530464833260da05f45bc680c188c5c1eff59010b0c6c6c6d00c74e442cfa4cd3e67d70a89fdaba67dcc8eec9ebc8716504cc02b6bd89bb8641c"))
     }
 }
