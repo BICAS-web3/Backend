@@ -107,8 +107,8 @@ CREATE TABLE IF NOT EXISTS Game(
             REFERENCES GameAbi(signature)
 );
 
-CREATE UNIQUE INDEX game_network_id_idx ON Game(network_id, address);
-CREATE UNIQUE INDEX game_address_idx ON Game(address);
+--CREATE UNIQUE INDEX game_network_id_idx ON Game(network_id, address);
+--CREATE UNIQUE INDEX game_address_idx ON Game(address);
 CREATE UNIQUE INDEX game_idx ON Game(network_id, name);
 
 CREATE VIEW GameInfo AS 

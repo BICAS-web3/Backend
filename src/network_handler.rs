@@ -1,4 +1,5 @@
-use crate::models::db_models::{Bet, BetInfo, GameInfo, NetworkInfo, Token, TokenPrice};
+use crate::models::db_models::{GameInfo, NetworkInfo, Token, TokenPrice};
+use crate::models::json_responses::{BetInfoResponse, Card};
 use crate::{communication::*, db::DB};
 use chrono::Utc;
 use ethabi::ethereum_types::{H256, U256};
@@ -136,68 +137,77 @@ async fn handle_game_log(
         .collect();
     debug!("Decoded data as hashmap {:?}", &decoded_data);
 
-    let bet = Bet {
+    let player_hand: Option<Vec<u8>> = decoded_data.get("playerHand").cloned().map(|token| {
+        token
+            .into_fixed_array()
+            .unwrap()
+            .iter()
+            .map(|token| token.clone().into_uint().unwrap().as_u32() as u8)
+            .collect()
+    });
+
+    let player_hand: Option<Vec<Card>> = player_hand.map(|player_hand| {
+        player_hand
+            .chunks(2)
+            .map(|chunk| Card {
+                number: chunk[0],
+                suit: chunk[1],
+            })
+            .collect()
+    });
+
+    let is_end_transaction = decoded_data.get("payout").is_some();
+
+    let bet = BetInfoResponse {
         id: 0,
         transaction_hash: format!("0x{}", hex::encode(log.transaction_hash.unwrap().0)),
         player: format!("0x{}", hex::encode(&topics[1].0[12..])),
         timestamp: Utc::now(),
         game_id: game.id,
-        wager: BigDecimal::from_str(
-            &decoded_data
-                .get("wager")
-                .unwrap()
-                .clone()
-                .into_uint()
-                .unwrap()
-                .to_string(),
-        )
-        .unwrap(),
-        token_address: format!(
-            "0x{}",
-            hex::encode(
-                decoded_data
-                    .get("tokenAddress")
-                    .unwrap()
-                    .clone()
-                    .into_address()
-                    .unwrap()
-                    .0
-            )
-        ),
+        wager: match decoded_data.get("wager") {
+            Some(n) => BigDecimal::from_str(&n.clone().into_uint().unwrap().to_string()).unwrap(),
+            None => BigDecimal::default(),
+        },
+        token_address: match decoded_data.get("tokenAddress") {
+            Some(token_address) => format!(
+                "0x{}",
+                hex::encode(token_address.clone().into_address().unwrap().0)
+            ),
+            None => "".to_string(),
+        },
         network_id: game.network_id,
-        bets: match match decoded_data.get("numGames") {
-            Some(t) => t,
+        bets: match decoded_data.get("numGames") {
+            Some(t) => match t.clone().into_uint() {
+                Some(n) => n.as_u32() as i64,
+                None => {
+                    error!("Could not parse uint for `numGames`");
+                    return;
+                }
+            },
             None => {
-                error!("Could not find token `numGames`");
-                return;
+                warn!("Could not find token `numGames`");
+                1
+                //return;
             }
-        }
-        .clone()
-        .into_uint()
-        {
-            Some(n) => n,
-            None => {
-                error!("Could not parse uint for `numGames`");
-                return;
-            }
-        }
-        .as_u32() as i64,
+        },
         multiplier: 1.0,
-        profit: BigDecimal::from_str(
-            &decoded_data
-                .get("payout")
-                .unwrap()
-                .clone()
-                .into_uint()
-                .unwrap()
-                .to_string(),
-        )
-        .unwrap(),
+        profit: match decoded_data.get("payout") {
+            Some(n) => BigDecimal::from_str(&n.clone().into_uint().unwrap().to_string()).unwrap(),
+            None => BigDecimal::default(),
+        },
+
+        player_nickname: Default::default(),
+        game_name: Default::default(),
+        token_name: Default::default(),
+        network_name: Default::default(),
+        player_hand,
     };
 
-    if let Err(e) = db_sender.send(DbMessage::PlaceBet(bet.clone())) {
-        error!("Error sending bet to db {:?}", e);
-        return;
+    if is_end_transaction {
+        if let Err(e) = db_sender.send(DbMessage::PlaceBet(bet.clone().into())) {
+            error!("Error sending bet to db {:?}", e);
+            return;
+        }
     }
 
     if let Err(e) = bet_sender.send(PropagatedBet {
@@ -390,7 +400,7 @@ pub async fn network_handler(
 pub async fn bet_listener(db: DB, mut bet_receiver: BetReceiver, ws_data_feed: WsDataFeedSender) {
     while let Ok(bet) = bet_receiver.recv().await {
         if let Ok(token) = db.query_token(&bet.bet.token_address).await {
-            let bet_info = BetInfo {
+            let bet_info = BetInfoResponse {
                 id: 0,
                 transaction_hash: bet.bet.transaction_hash.clone(),
                 player: bet.bet.player.clone(),
@@ -410,12 +420,38 @@ pub async fn bet_listener(db: DB, mut bet_receiver: BetReceiver, ws_data_feed: W
                 bets: bet.bet.bets,
                 multiplier: bet.bet.multiplier,
                 profit: bet.bet.profit.clone(),
+                player_hand: bet.bet.player_hand,
             };
             if let Err(e) = ws_data_feed.send(bet_info) {
                 error!("Error sending bet to the ws feed {:?}", e);
             }
         } else {
-            error!("Token `{}` not found", &bet.bet.token_address);
+            warn!("Token `{}` not found", &bet.bet.token_address);
+            let bet_info = BetInfoResponse {
+                id: 0,
+                transaction_hash: bet.bet.transaction_hash.clone(),
+                player: bet.bet.player.clone(),
+                player_nickname: db
+                    .query_nickname(&bet.bet.player)
+                    .await
+                    .unwrap_or(None)
+                    .map(|player| player.nickname),
+                timestamp: bet.bet.timestamp,
+                game_id: bet.bet.game_id,
+                game_name: bet.game_name.clone(),
+                wager: bet.bet.wager.clone(),
+                token_address: bet.bet.token_address.clone(),
+                token_name: "".to_string(),
+                network_id: bet.bet.network_id,
+                network_name: bet.network_name.clone(),
+                bets: bet.bet.bets,
+                multiplier: bet.bet.multiplier,
+                profit: bet.bet.profit.clone(),
+                player_hand: bet.bet.player_hand,
+            };
+            if let Err(e) = ws_data_feed.send(bet_info) {
+                error!("Error sending bet to the ws feed {:?}", e);
+            }
         }
     }
 }
