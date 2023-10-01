@@ -1,4 +1,4 @@
-use crate::models::db_models::{Bet, BetInfo, GameInfo, NetworkInfo, Token, TokenPrice};
+use crate::models::db_models::{GameInfo, NetworkInfo, Token, TokenPrice};
 use crate::models::json_responses::{BetInfoResponse, Card};
 use crate::{communication::*, db::DB};
 use chrono::Utc;
@@ -200,7 +200,7 @@ async fn handle_game_log(
         game_name: Default::default(),
         token_name: Default::default(),
         network_name: Default::default(),
-        player_hand: player_hand,
+        player_hand,
     };
 
     if is_end_transaction {

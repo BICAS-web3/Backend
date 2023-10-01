@@ -1,6 +1,6 @@
 pub use tokio::sync::broadcast::{channel, Receiver, Sender};
 
-use crate::models::db_models::{Bet, BetInfo, TokenPrice};
+use crate::models::db_models::{Bet, TokenPrice};
 use crate::models::json_responses::BetInfoResponse;
 
 pub use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
