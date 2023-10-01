@@ -142,7 +142,7 @@ async fn handle_game_log(
             .into_fixed_array()
             .unwrap()
             .iter()
-            .map(|token| token.clone().into_int().unwrap().as_u32() as u8)
+            .map(|token| token.clone().into_uint().unwrap().as_u32() as u8)
             .collect()
     });
 
