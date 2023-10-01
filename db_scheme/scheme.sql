@@ -312,6 +312,20 @@ INSERT INTO public.gameabi(
         '["uint256","uint256","address","uint8[]","uint8[]","uint256[]","uint32"]', 
         'wager payout tokenAddress outcomes randomActions payouts numGames'
     );
+INSERT INTO public.gameabi(
+	signature, types, names)
+	VALUES (
+        '0xb73b6b634aea9965e3c60d60ac8d2380100c337b6d66167d297351746f4f1ac9', 
+        '["uint256","uint256","address","uint8[10]","uint256"]', 
+        'wager payout tokenAddress playerHand outcome'
+    );
+INSERT INTO public.gameabi(
+	signature, types, names)
+	VALUES (
+        '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a', 
+        '["uint8[10]"]', 
+        'playerHand'
+    );
 
 -- game
 INSERT INTO public.game(
@@ -345,4 +359,20 @@ INSERT INTO public.game(
         'RockPaperScissors',
         '0x02C3284378488eF235fE04D5E2E5Af4e36b5dCf4', 
         '0x10926c19b020b305e529b4fbe64764ce71360378f742c3e3d04e62d586bf9c0e'
+    );
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        5,
+        'Poker',
+        '0xD91e9c8b0B77bDd8cd044B84ED70a8bC21bCaE87', 
+        '0xb73b6b634aea9965e3c60d60ac8d2380100c337b6d66167d297351746f4f1ac9'
+    );
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        5,
+        'PokerStart',
+        '0xD91e9c8b0B77bDd8cd044B84ED70a8bC21bCaE87', 
+        '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a'
     );
