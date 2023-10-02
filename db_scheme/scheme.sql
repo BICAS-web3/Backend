@@ -144,6 +144,14 @@ CREATE TABLE IF NOT EXISTS Player(
 
 CREATE UNIQUE INDEX player_idx ON Player(address);
 
+CREATE TABLE IF NOT EXISTS Referals(
+    id BIGSERIAL PRIMARY KEY,
+    refer_to character(42) NOT NULL,
+    referal character(42) NOT NULL
+);
+
+CREATE UNIQUE INDEX referal_idx ON Referals(referal);
+
 CREATE TABLE IF NOT EXISTS Bet(
     id BIGSERIAL PRIMARY KEY,
     transaction_hash character(66) NOT NULL UNIQUE,

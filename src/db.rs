@@ -567,4 +567,19 @@ impl DB {
         .fetch_one(&self.db_pool)
         .await
     }
+
+    pub async fn create_referal(&self, refer_to: &str, referal: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "
+            INSERT INTO Referals(
+                refer_to, referal)
+            VALUES ($1, $2)
+            ",
+            refer_to,
+            referal
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
 }

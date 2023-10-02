@@ -14,6 +14,9 @@ pub enum ApiError {
 
     #[error("Bad signature provided address: `{0}` message: `{1}` signature: `{2}`")]
     BadSignature(String, String, String),
+
+    #[error("{0}")]
+    ArbitraryError(String),
 }
 
 impl reject::Reject for ApiError {}

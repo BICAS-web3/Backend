@@ -1143,6 +1143,19 @@
     },
     "query": "\n                SELECT *\n                 FROM BetInfo\n                WHERE player = $1\n                ORDER BY timestamp ASC\n                LIMIT $2\n                "
   },
+  "c30c51660d4e870725035d1970c23cc450ce19a7d15fae190080fbc6d4f646ad": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Bpchar",
+          "Bpchar"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO Referals(\n                refer_to, referal)\n            VALUES ($1, $2)\n            "
+  },
   "c9a298601585a2bb8144e4c744ffd7a5d7c38c2f92ac303fb17badda9c8cf02a": {
     "describe": {
       "columns": [

@@ -443,6 +443,13 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct CreateReferal {
+        pub refer_to: String,
+        pub referal: String,
+        pub signature: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct ByNetworkId {
         pub network_id: i64,
     }

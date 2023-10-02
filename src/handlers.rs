@@ -411,6 +411,36 @@ pub mod player {
             },
         )))
     }
+
+    /// Subscribe to the referal owner
+    ///
+    /// Subscribes to the owner of the referal wallet
+    #[utoipa::path(
+        tag="referal",
+        get,
+        path = "/api/player/referal/subscribe",
+        responses(
+            (status = 200, description = "Ok", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+        ),
+    )]
+    pub async fn create_referal(
+        data: json_requests::CreateReferal,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        if data.refer_to.to_lowercase() == data.referal.to_lowercase() {
+            return Err(reject::custom(ApiError::ArbitraryError(
+                "Referer and referal are the same".into(),
+            )));
+        }
+        db.create_referal(&data.refer_to, &data.referal)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Referal has been created"))
+    }
 }
 
 pub mod bets {

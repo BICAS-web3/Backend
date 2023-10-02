@@ -18,7 +18,7 @@ fn with_channel(
     warp::any().map(move || ch.subscribe())
 }
 
-async fn with_signature<'a>(
+async fn with_signature_nickname<'a>(
     credentials: json_requests::SetNickname,
 ) -> Result<json_requests::SetNickname, warp::Rejection> {
     if tools::verify_signature(
@@ -36,8 +36,28 @@ async fn with_signature<'a>(
     }
 }
 
+async fn with_signature_referal<'a>(
+    credentials: json_requests::CreateReferal,
+) -> Result<json_requests::CreateReferal, warp::Rejection> {
+    let msg = format!("{} {}", &credentials.refer_to, &credentials.referal);
+    if tools::verify_signature(&credentials.referal, &msg, &credentials.signature) {
+        Ok(credentials)
+    } else {
+        Err(reject::custom(ApiError::BadSignature(
+            credentials.referal.to_string(),
+            msg.to_string(),
+            credentials.signature,
+        )))
+    }
+}
+
 fn json_body_set_nickname(
 ) -> impl Filter<Extract = (json_requests::SetNickname,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_subscribe_referal(
+) -> impl Filter<Extract = (json_requests::CreateReferal,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
@@ -157,7 +177,7 @@ pub fn set_nickname(
     warp::path!("set")
         .and(warp::post())
         .and(json_body_set_nickname())
-        .and_then(with_signature)
+        .and_then(with_signature_nickname)
         .and(with_db(db))
         .and_then(handlers::set_nickname)
 }
@@ -186,6 +206,17 @@ pub fn get_player_totals(
         .and_then(handlers::get_player_totals)
 }
 
+pub fn create_referal(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("subscribe")
+        .and(warp::post())
+        .and(json_body_subscribe_referal())
+        .and_then(with_signature_referal)
+        .and(with_db(db))
+        .and_then(handlers::player::create_referal)
+}
+
 pub fn player(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -193,7 +224,8 @@ pub fn player(
         get_player(db.clone())
             .or(warp::path("nickname").and(get_nickname(db.clone()).or(set_nickname(db.clone()))))
             .or(get_latest_games(db.clone()))
-            .or(get_player_totals(db)),
+            .or(get_player_totals(db.clone()))
+            .or(warp::path("referal").and(create_referal(db))),
     )
 }
 
