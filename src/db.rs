@@ -1,8 +1,8 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LatestGames, NetworkInfo,
-        Nickname, Player, PlayerTotals, RpcUrl, Token, TokenPrice, Totals,
+        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock, LatestGames,
+        NetworkInfo, Nickname, Player, PlayerTotals, RpcUrl, Token, TokenPrice, Totals,
     },
 };
 
@@ -524,7 +524,7 @@ impl DB {
             bet.network_id,
             bet.bets,
             bet.multiplier,
-            bet.profit
+            bet.profit,
         )
         .execute(&self.db_pool)
         .await
@@ -566,6 +566,38 @@ impl DB {
         )
         .fetch_one(&self.db_pool)
         .await
+    }
+
+    pub async fn query_last_block(
+        &self,
+        network_id: i64,
+    ) -> Result<Option<LastBlock>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            LastBlock,
+            r#"
+            SELECT * FROM LastBlock WHERE network_id=$1
+            "#,
+            network_id
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+    }
+
+    pub async fn set_last_block(&self, network_id: i64, block_id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            "
+            INSERT INTO LastBlock(id, network_id)
+            VALUES ($1, $2)
+            ON CONFLICT(id, network_id) DO UPDATE
+                SET id = excluded.id
+            ",
+            block_id,
+            network_id,
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        Ok(())
     }
 
     pub async fn create_referal(&self, refer_to: &str, referal: &str) -> Result<(), sqlx::Error> {

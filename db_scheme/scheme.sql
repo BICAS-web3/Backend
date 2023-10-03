@@ -154,7 +154,7 @@ CREATE UNIQUE INDEX referal_idx ON Referals(referal);
 
 CREATE TABLE IF NOT EXISTS Bet(
     id BIGSERIAL PRIMARY KEY,
-    transaction_hash character(66) NOT NULL UNIQUE,
+    transaction_hash character(66) NOT NULL,
     player character(42) NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     game_id BIGINT NOT NULL,
@@ -174,6 +174,7 @@ CREATE TABLE IF NOT EXISTS Bet(
             REFERENCES Network(id)
 );
 
+CREATE UNIQUE INDEX bet_unique_idx ON Bet(transaction_hash, network_id);
 CREATE INDEX bet_player_idx ON Bet(player);
 CREATE INDEX bet_game_idx ON Bet(game_id);
 CREATE INDEX bet_idx ON Bet(player, game_id);
@@ -240,6 +241,17 @@ CREATE TABLE IF NOT EXISTS BanWords(
     id BIGSERIAL PRIMARY KEY,
     word TEXT
 );
+
+CREATE TABLE IF NOT EXISTS LastBlock(
+    id BIGINT NOT NULL,
+    network_id BIGINT NOT NULL,
+
+    CONSTRAINT fk_network
+        FOREIGN KEY(network_id)
+            REFERENCES Network(id)
+);
+
+CREATE UNIQUE INDEX lastblock_unique_idx ON LastBlock(id, network_id);
 
 
 -- INITIAL DATA

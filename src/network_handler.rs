@@ -74,12 +74,20 @@ pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
                 )
             })
             .collect();
+
+        let last_block = db
+            .query_last_block(network.network_id)
+            .await
+            .unwrap()
+            .map(|block| block.id as u64);
+
         tokio::spawn(network_handler(
             network.clone(),
             rpcs,
             games,
             db_sender.clone(),
             bet_sender.clone(),
+            last_block,
         ));
     }
 
@@ -339,6 +347,7 @@ pub async fn network_handler(
     games: GameInnerInfo,
     db_sender: DbSender,
     bet_sender: BetSender,
+    mut last_block: Option<u64>,
 ) {
     //let mut restart = true;
 
@@ -353,46 +362,78 @@ pub async fn network_handler(
 
         let web3 = web3::Web3::new(transport);
 
-        let filter = FilterBuilder::default()
-            .address(games.iter().map(|item| item.1 .0).collect())
-            .build();
-
-        let filter_game_logs = match web3.eth_filter().create_logs_filter(filter).await {
-            Ok(f) => f,
-            Err(e) => {
-                error!(
-                    "network id `{:?}`: Error creating filter `{:?}`",
-                    network.network_id, e
-                );
-                continue;
-            }
-        };
-
-        let logs_stream = filter_game_logs.stream(time::Duration::from_secs(1));
-        futures::pin_mut!(logs_stream);
-
-        loop {
-            let log = match logs_stream.next().await {
-                Some(Ok(log)) => log,
-                Some(Err(e)) => {
+        if last_block.is_none() {
+            last_block.replace(match web3.eth().block_number().await {
+                Ok(block_number) => block_number.as_u64(),
+                Err(e) => {
                     error!(
-                        "Error reading log stream for Network: `{:?}` {:?}",
+                        "network id `{:?}`: Error creating filter `{:?}`",
                         network.network_id, e
                     );
-                    //restart = true;
-                    break;
+                    continue;
                 }
-                None => {
-                    warn!(
-                        "Connection for Network `{:?}` is closed",
-                        network.network_id
+            });
+        }
+
+        let filter = FilterBuilder::default()
+            .address(games.iter().map(|item| item.1 .0).collect())
+            .limit(10)
+            .from_block(last_block.unwrap().into())
+            .build();
+
+        // let filter_game_logs = match web3.eth_filter().create_logs_filter(filter).await {
+        //     Ok(f) => f,
+        //     Err(e) => {
+        //         error!(
+        //             "network id `{:?}`: Error creating filter `{:?}`",
+        //             network.network_id, e
+        //         );
+        //         continue;
+        //     }
+        // };
+
+        // let logs_stream = filter_game_logs.stream(time::Duration::from_secs(1));
+        // futures::pin_mut!(logs_stream);
+
+        loop {
+            let logs = match web3.eth().logs(filter.clone()).await {
+                Ok(logs) => logs,
+                Err(e) => {
+                    error!(
+                        "network id `{:?}`: Error creating filter `{:?}`",
+                        network.network_id, e
                     );
-                    //restart = true;
-                    break;
+                    continue;
                 }
             };
 
-            handle_game_log(log, &network, &games, &db_sender, &bet_sender).await;
+            debug!("Network `{}` got {} logs", network.network_id, logs.len());
+
+            for log in logs {
+                // let log = match logs_stream.next().await {
+                //     Some(Ok(log)) => log,
+                //     Some(Err(e)) => {
+                //         error!(
+                //             "Error reading log stream for Network: `{:?}` {:?}",
+                //             network.network_id, e
+                //         );
+                //         //restart = true;
+                //         break;
+                //     }
+                //     None => {
+                //         warn!(
+                //             "Connection for Network `{:?}` is closed",
+                //             network.network_id
+                //         );
+                //         //restart = true;
+                //         break;
+                //     }
+                // };
+
+                handle_game_log(log, &network, &games, &db_sender, &bet_sender).await;
+            }
+
+            sleep(Duration::from_millis(10000)).await;
         }
     }
 }

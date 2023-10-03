@@ -275,6 +275,45 @@
     },
     "query": "\n            SELECT *\n            FROM Nickname\n            WHERE address = $1\n            LIMIT 1\n            "
   },
+  "407b7e5538de238c9c0a4ddedf4e6bb176f83c46d4aca6bd8a3bd6063585a399": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO LastBlock(id, network_id)\n            VALUES ($1, $2)\n            ON CONFLICT(id, network_id) DO UPDATE\n                SET id = excluded.id\n            "
+  },
+  "4ad051a46bd3ce5e69a09abbc2d9e0f0a3e99c5ef0ca9f32674d4414b26fd6e7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Int8"
+        },
+        {
+          "name": "network_id",
+          "ordinal": 1,
+          "type_info": "Int8"
+        }
+      ],
+      "nullable": [
+        false,
+        false
+      ],
+      "parameters": {
+        "Left": [
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            SELECT * FROM LastBlock WHERE network_id=$1\n            "
+  },
   "4ebcf9c23d4b75b3d78d3f14446acc9932f09b290632275de1d5352c93ea0083": {
     "describe": {
       "columns": [
