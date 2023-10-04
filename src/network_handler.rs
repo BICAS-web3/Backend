@@ -4,7 +4,6 @@ use crate::{communication::*, db::DB};
 use chrono::Utc;
 use ethabi::ethereum_types::{H256, U256};
 use ethabi::{ParamType, Token as EthToken};
-use futures::StreamExt;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sqlx::types::BigDecimal;
@@ -14,7 +13,7 @@ use tokio::time::{sleep, Duration};
 use web3::contract::Contract;
 
 use std::str::FromStr;
-use std::time;
+
 use tracing::{debug, error, warn};
 
 use web3::types::{FilterBuilder, Log, H160};
@@ -74,12 +73,20 @@ pub async fn start_network_handlers(db: DB, bet_sender: BetSender) {
                 )
             })
             .collect();
+
+        let last_block = db
+            .query_last_block(network.network_id)
+            .await
+            .unwrap()
+            .map(|block| block.id as u64);
+
         tokio::spawn(network_handler(
             network.clone(),
             rpcs,
             games,
             db_sender.clone(),
             bet_sender.clone(),
+            last_block,
         ));
     }
 
@@ -107,6 +114,7 @@ async fn handle_game_log(
     games: &GameInnerInfo,
     db_sender: &DbSender,
     bet_sender: &BetSender,
+    block_id: u64,
 ) {
     debug!("Log received {:?}", log);
 
@@ -204,7 +212,10 @@ async fn handle_game_log(
     };
 
     if is_end_transaction {
-        if let Err(e) = db_sender.send(DbMessage::PlaceBet(bet.clone().into())) {
+        if let Err(e) = db_sender.send(DbMessage::PlaceBet(DbPropagatedBet {
+            bet: bet.clone().into(),
+            block_id,
+        })) {
             error!("Error sending bet to db {:?}", e);
             return;
         }
@@ -339,6 +350,7 @@ pub async fn network_handler(
     games: GameInnerInfo,
     db_sender: DbSender,
     bet_sender: BetSender,
+    mut last_block: Option<u64>,
 ) {
     //let mut restart = true;
 
@@ -353,46 +365,72 @@ pub async fn network_handler(
 
         let web3 = web3::Web3::new(transport);
 
-        let filter = FilterBuilder::default()
-            .address(games.iter().map(|item| item.1 .0).collect())
-            .build();
-
-        let filter_game_logs = match web3.eth_filter().create_logs_filter(filter).await {
-            Ok(f) => f,
-            Err(e) => {
-                error!(
-                    "network id `{:?}`: Error creating filter `{:?}`",
-                    network.network_id, e
-                );
-                continue;
-            }
-        };
-
-        let logs_stream = filter_game_logs.stream(time::Duration::from_secs(1));
-        futures::pin_mut!(logs_stream);
-
-        loop {
-            let log = match logs_stream.next().await {
-                Some(Ok(log)) => log,
-                Some(Err(e)) => {
+        if last_block.is_none() {
+            last_block.replace(match web3.eth().block_number().await {
+                Ok(block_number) => block_number.as_u64(),
+                Err(e) => {
                     error!(
-                        "Error reading log stream for Network: `{:?}` {:?}",
+                        "network id `{:?}`: Error creating filter `{:?}`",
                         network.network_id, e
                     );
-                    //restart = true;
-                    break;
+                    continue;
                 }
-                None => {
-                    warn!(
-                        "Connection for Network `{:?}` is closed",
-                        network.network_id
+            });
+        }
+
+        debug!(
+            "Network {} Latest block id {:?}",
+            network.network_id, last_block
+        );
+
+        loop {
+            let filter = FilterBuilder::default()
+                .address(games.iter().map(|item| item.1 .0).collect())
+                .limit(40)
+                .from_block(last_block.unwrap().into())
+                .build();
+
+            let logs = match web3.eth().logs(filter).await {
+                Ok(logs) => logs,
+                Err(e) => {
+                    error!(
+                        "network id `{:?}`: Error creating filter `{:?}`",
+                        network.network_id, e
                     );
-                    //restart = true;
-                    break;
+                    continue;
                 }
             };
 
-            handle_game_log(log, &network, &games, &db_sender, &bet_sender).await;
+            debug!("Network `{}` got {} logs", network.network_id, logs.len());
+
+            if logs.is_empty() {
+                last_block.replace(match web3.eth().block_number().await {
+                    Ok(block_number) => block_number.as_u64(),
+                    Err(e) => {
+                        error!(
+                            "network id `{:?}`: Error creating filter `{:?}`",
+                            network.network_id, e
+                        );
+                        continue;
+                    }
+                });
+            }
+
+            for log in logs {
+                let block_id = log
+                    .block_number
+                    .map(|id| id.as_u64())
+                    .expect("No block id found");
+                handle_game_log(log, &network, &games, &db_sender, &bet_sender, block_id).await;
+                last_block.replace(block_id + 1);
+            }
+
+            debug!(
+                "Network {} Latest block id {:?}",
+                network.network_id, last_block
+            );
+
+            sleep(Duration::from_millis(5000)).await;
         }
     }
 }
@@ -460,8 +498,14 @@ pub async fn db_listener(mut receiver: DbReceiver, db: DB) {
     while let Some(msg) = receiver.recv().await {
         match msg {
             DbMessage::PlaceBet(bet) => {
-                if let Err(e) = db.place_bet(&bet).await {
+                if let Err(e) = db.place_bet(&bet.bet).await {
                     error!("Error placing bet {:?}", e);
+                }
+                if let Err(e) = db
+                    .set_last_block(bet.bet.network_id, bet.block_id as i64)
+                    .await
+                {
+                    error!("Error changing block id {:?}", e);
                 }
             }
             DbMessage::NewPrice(price) => {

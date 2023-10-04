@@ -9,6 +9,12 @@ pub mod db_models {
     use sqlx::types::BigDecimal;
 
     #[derive(Deserialize, Serialize, ToSchema, Debug)]
+    pub struct LastBlock {
+        pub id: i64,
+        pub network_id: i64,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
     pub struct TokenPrice {
         pub id: i64,
         pub token_name: String,
