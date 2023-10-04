@@ -4,7 +4,6 @@ use crate::{communication::*, db::DB};
 use chrono::Utc;
 use ethabi::ethereum_types::{H256, U256};
 use ethabi::{ParamType, Token as EthToken};
-use futures::StreamExt;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use sqlx::types::BigDecimal;
@@ -14,7 +13,7 @@ use tokio::time::{sleep, Duration};
 use web3::contract::Contract;
 
 use std::str::FromStr;
-use std::time;
+
 use tracing::{debug, error, warn};
 
 use web3::types::{FilterBuilder, Log, H160};
@@ -503,7 +502,7 @@ pub async fn db_listener(mut receiver: DbReceiver, db: DB) {
                     error!("Error placing bet {:?}", e);
                 }
                 if let Err(e) = db
-                    .set_last_block(bet.bet.network_id as i64, bet.block_id as i64)
+                    .set_last_block(bet.bet.network_id, bet.block_id as i64)
                     .await
                 {
                     error!("Error changing block id {:?}", e);
