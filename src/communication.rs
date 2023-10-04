@@ -5,8 +5,13 @@ use crate::models::json_responses::BetInfoResponse;
 
 pub use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
+pub struct DbPropagatedBet {
+    pub bet: Bet,
+    pub block_id: u64,
+}
+
 pub enum DbMessage {
-    PlaceBet(Bet),
+    PlaceBet(DbPropagatedBet),
     NewPrice(TokenPrice),
 }
 

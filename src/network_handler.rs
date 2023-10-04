@@ -115,6 +115,7 @@ async fn handle_game_log(
     games: &GameInnerInfo,
     db_sender: &DbSender,
     bet_sender: &BetSender,
+    block_id: u64,
 ) {
     debug!("Log received {:?}", log);
 
@@ -212,7 +213,10 @@ async fn handle_game_log(
     };
 
     if is_end_transaction {
-        if let Err(e) = db_sender.send(DbMessage::PlaceBet(bet.clone().into())) {
+        if let Err(e) = db_sender.send(DbMessage::PlaceBet(DbPropagatedBet {
+            bet: bet.clone().into(),
+            block_id,
+        })) {
             error!("Error sending bet to db {:?}", e);
             return;
         }
@@ -375,28 +379,19 @@ pub async fn network_handler(
             });
         }
 
-        let filter = FilterBuilder::default()
-            .address(games.iter().map(|item| item.1 .0).collect())
-            .limit(10)
-            .from_block(last_block.unwrap().into())
-            .build();
-
-        // let filter_game_logs = match web3.eth_filter().create_logs_filter(filter).await {
-        //     Ok(f) => f,
-        //     Err(e) => {
-        //         error!(
-        //             "network id `{:?}`: Error creating filter `{:?}`",
-        //             network.network_id, e
-        //         );
-        //         continue;
-        //     }
-        // };
-
-        // let logs_stream = filter_game_logs.stream(time::Duration::from_secs(1));
-        // futures::pin_mut!(logs_stream);
+        debug!(
+            "Network {} Latest block id {:?}",
+            network.network_id, last_block
+        );
 
         loop {
-            let logs = match web3.eth().logs(filter.clone()).await {
+            let filter = FilterBuilder::default()
+                .address(games.iter().map(|item| item.1 .0).collect())
+                .limit(40)
+                .from_block(last_block.unwrap().into())
+                .build();
+
+            let logs = match web3.eth().logs(filter).await {
                 Ok(logs) => logs,
                 Err(e) => {
                     error!(
@@ -409,31 +404,34 @@ pub async fn network_handler(
 
             debug!("Network `{}` got {} logs", network.network_id, logs.len());
 
-            for log in logs {
-                // let log = match logs_stream.next().await {
-                //     Some(Ok(log)) => log,
-                //     Some(Err(e)) => {
-                //         error!(
-                //             "Error reading log stream for Network: `{:?}` {:?}",
-                //             network.network_id, e
-                //         );
-                //         //restart = true;
-                //         break;
-                //     }
-                //     None => {
-                //         warn!(
-                //             "Connection for Network `{:?}` is closed",
-                //             network.network_id
-                //         );
-                //         //restart = true;
-                //         break;
-                //     }
-                // };
-
-                handle_game_log(log, &network, &games, &db_sender, &bet_sender).await;
+            if logs.is_empty() {
+                last_block.replace(match web3.eth().block_number().await {
+                    Ok(block_number) => block_number.as_u64(),
+                    Err(e) => {
+                        error!(
+                            "network id `{:?}`: Error creating filter `{:?}`",
+                            network.network_id, e
+                        );
+                        continue;
+                    }
+                });
             }
 
-            sleep(Duration::from_millis(10000)).await;
+            for log in logs {
+                let block_id = log
+                    .block_number
+                    .map(|id| id.as_u64())
+                    .expect("No block id found");
+                handle_game_log(log, &network, &games, &db_sender, &bet_sender, block_id).await;
+                last_block.replace(block_id + 1);
+            }
+
+            debug!(
+                "Network {} Latest block id {:?}",
+                network.network_id, last_block
+            );
+
+            sleep(Duration::from_millis(5000)).await;
         }
     }
 }
@@ -501,8 +499,14 @@ pub async fn db_listener(mut receiver: DbReceiver, db: DB) {
     while let Some(msg) = receiver.recv().await {
         match msg {
             DbMessage::PlaceBet(bet) => {
-                if let Err(e) = db.place_bet(&bet).await {
+                if let Err(e) = db.place_bet(&bet.bet).await {
                     error!("Error placing bet {:?}", e);
+                }
+                if let Err(e) = db
+                    .set_last_block(bet.bet.network_id as i64, bet.block_id as i64)
+                    .await
+                {
+                    error!("Error changing block id {:?}", e);
                 }
             }
             DbMessage::NewPrice(price) => {
