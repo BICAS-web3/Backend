@@ -154,7 +154,7 @@ CREATE UNIQUE INDEX referal_idx ON Referals(referal);
 
 CREATE TABLE IF NOT EXISTS Bet(
     id BIGSERIAL PRIMARY KEY,
-    transaction_hash character(66) NOT NULL,
+    transaction_hash character(66) NOT NULL UNIQUE,
     player character(42) NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     game_id BIGINT NOT NULL,
@@ -174,7 +174,6 @@ CREATE TABLE IF NOT EXISTS Bet(
             REFERENCES Network(id)
 );
 
-CREATE UNIQUE INDEX bet_unique_idx ON Bet(transaction_hash, network_id);
 CREATE INDEX bet_player_idx ON Bet(player);
 CREATE INDEX bet_game_idx ON Bet(game_id);
 CREATE INDEX bet_idx ON Bet(player, game_id);
@@ -242,17 +241,6 @@ CREATE TABLE IF NOT EXISTS BanWords(
     word TEXT
 );
 
-CREATE TABLE IF NOT EXISTS LastBlock(
-    id BIGINT NOT NULL,
-    network_id BIGINT NOT NULL,
-
-    CONSTRAINT fk_network
-        FOREIGN KEY(network_id)
-            REFERENCES Network(id)
-);
-
-CREATE UNIQUE INDEX lastblock_unique_idx ON LastBlock(id, network_id);
-
 
 -- INITIAL DATA
 
@@ -268,42 +256,60 @@ INSERT INTO public.nativecurrency(
 	VALUES ('ETH', 'ETH', 18);
 
 -- network
-INSERT INTO public.network(
-	id, name, short_name, native_currency_id)
-	VALUES (97, 'BSC TestNet', 'BSCT', 2);
-INSERT INTO public.network(
-	id, name, short_name, native_currency_id)
-	VALUES (5, 'Goerli', 'Goerli', 3);
+-- INSERT INTO public.network(
+-- 	id, name, short_name, native_currency_id)
+-- 	VALUES (97, 'BSC TestNet', 'BSCT', 2);
+-- INSERT INTO public.network(
+-- 	id, name, short_name, native_currency_id)
+-- 	VALUES (5, 'Goerli', 'Goerli', 3);
 INSERT INTO public.network(
 	id, name, short_name, native_currency_id)
 	VALUES (56, 'Binance smart chain', 'BSC', 2);
+INSERT INTO public.network(
+	id, name, short_name, native_currency_id)
+	VALUES (42161, 'Arbitrum', 'ARB', 1);
 
 -- rpc
+-- INSERT INTO public.rpcurl(
+-- 	network_id, url)
+-- 	VALUES (97, 'https://data-seed-prebsc-1-s1.binance.org:8545');
+-- INSERT INTO public.rpcurl(
+-- 	network_id, url)
+-- 	VALUES (5, 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161');
 INSERT INTO public.rpcurl(
 	network_id, url)
-	VALUES (97, 'https://data-seed-prebsc-1-s1.binance.org:8545');
+	VALUES (56, 'https://bsc-mainnet.nodereal.io/v1/64a9df0874fb4a93b9d0a3849de012d3');
 INSERT INTO public.rpcurl(
 	network_id, url)
-	VALUES (5, 'https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161');
+	VALUES (42161, 'https://arb1.arbitrum.io/rpc');
 
 -- blockexplorer
+-- INSERT INTO public.blockexplorerurl(
+-- 	network_id, url)
+-- 	VALUES (97, 'https://testnet.bscscan.com');
+-- INSERT INTO public.blockexplorerurl(
+-- 	network_id, url)
+-- 	VALUES (5, 'https://goerli.etherscan.io');
 INSERT INTO public.blockexplorerurl(
 	network_id, url)
-	VALUES (97, 'https://testnet.bscscan.com');
+	VALUES (56, 'https://bscscan.com');
 INSERT INTO public.blockexplorerurl(
 	network_id, url)
-	VALUES (5, 'https://goerli.etherscan.io');
+	VALUES (42161, 'https://arbiscan.io');
 
 -- token
-INSERT INTO public.token(
-	network_id, name, contract_address)
-	VALUES (97, 'DRAX', '0xbdc4e7171743f6f1b52b6a7d479ed32d8ffcf018');
-INSERT INTO public.token(
-	network_id, name, contract_address)
-	VALUES (5, 'DRAX', '0xa9a9a2f699537806197baa5e0ba2f0ec4336c825');
+-- INSERT INTO public.token(
+-- 	network_id, name, contract_address)
+-- 	VALUES (97, 'DRAX', '0xbdc4e7171743f6f1b52b6a7d479ed32d8ffcf018');
+-- INSERT INTO public.token(
+-- 	network_id, name, contract_address)
+-- 	VALUES (5, 'DRAX', '0xa9a9a2f699537806197baa5e0ba2f0ec4336c825');
 INSERT INTO public.token(
 	network_id, name, contract_address)
 	VALUES (56, 'DRAX', '0x7f7f49b6128f7cb89baab704f6ea1662a270455b');
+INSERT INTO public.token(
+	network_id, name, contract_address)
+	VALUES (42161, 'ARB', '0x912ce59144191c1204e64559fe8253a0e49e6548');
 
 -- pancakeaddress
 INSERT INTO public.pancakeaddress(
@@ -348,51 +354,85 @@ INSERT INTO public.gameabi(
     );
 
 -- game
+-- INSERT INTO public.game(
+-- 	network_id, name, address, result_event_signature)
+-- 	VALUES (
+--         97,
+--         'CoinFlip',
+--         '0xa81bbcb6807fb63c0e7dbb1289ef5fe02410b512', 
+--         '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004'
+--     );
+-- INSERT INTO public.game(
+-- 	network_id, name, address, result_event_signature)
+-- 	VALUES (
+--         5,
+--         'CoinFlip',
+--         '0x1c5e8342A3c8a11c4726C7eA5E63CDF93c00B93C', 
+--         '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004'
+--     );
+-- INSERT INTO public.game(
+-- 	network_id, name, address, result_event_signature)
+-- 	VALUES (
+--         5,
+--         'Dice',
+--         '0x5070ac920B5c19aC5b87EE0E355D9c690be0bd46', 
+--         '0x090dbd65630d04a5178ecb9346e0cdcc299215a135c6eb7ecd530ce00dfa44d2'
+--     );
+-- INSERT INTO public.game(
+-- 	network_id, name, address, result_event_signature)
+-- 	VALUES (
+--         5,
+--         'RockPaperScissors',
+--         '0x02C3284378488eF235fE04D5E2E5Af4e36b5dCf4', 
+--         '0x10926c19b020b305e529b4fbe64764ce71360378f742c3e3d04e62d586bf9c0e'
+--     );
+-- INSERT INTO public.game(
+-- 	network_id, name, address, result_event_signature)
+-- 	VALUES (
+--         5,
+--         'Poker',
+--         '0xD91e9c8b0B77bDd8cd044B84ED70a8bC21bCaE87', 
+--         '0xb73b6b634aea9965e3c60d60ac8d2380100c337b6d66167d297351746f4f1ac9'
+--     );
+-- INSERT INTO public.game(
+-- 	network_id, name, address, result_event_signature)
+-- 	VALUES (
+--         5,
+--         'PokerStart',
+--         '0xD91e9c8b0B77bDd8cd044B84ED70a8bC21bCaE87', 
+--         '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a'
+--     );
+
 INSERT INTO public.game(
 	network_id, name, address, result_event_signature)
 	VALUES (
-        97,
-        'CoinFlip',
-        '0xa81bbcb6807fb63c0e7dbb1289ef5fe02410b512', 
-        '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004'
-    );
-INSERT INTO public.game(
-	network_id, name, address, result_event_signature)
-	VALUES (
-        5,
-        'CoinFlip',
-        '0x1c5e8342A3c8a11c4726C7eA5E63CDF93c00B93C', 
-        '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004'
-    );
-INSERT INTO public.game(
-	network_id, name, address, result_event_signature)
-	VALUES (
-        5,
-        'Dice',
-        '0x5070ac920B5c19aC5b87EE0E355D9c690be0bd46', 
-        '0x090dbd65630d04a5178ecb9346e0cdcc299215a135c6eb7ecd530ce00dfa44d2'
-    );
-INSERT INTO public.game(
-	network_id, name, address, result_event_signature)
-	VALUES (
-        5,
-        'RockPaperScissors',
-        '0x02C3284378488eF235fE04D5E2E5Af4e36b5dCf4', 
-        '0x10926c19b020b305e529b4fbe64764ce71360378f742c3e3d04e62d586bf9c0e'
-    );
-INSERT INTO public.game(
-	network_id, name, address, result_event_signature)
-	VALUES (
-        5,
+        56,
         'Poker',
-        '0xD91e9c8b0B77bDd8cd044B84ED70a8bC21bCaE87', 
+        '0x64B72C684364Df7aAdb8716ddE51650A9131436f', 
         '0xb73b6b634aea9965e3c60d60ac8d2380100c337b6d66167d297351746f4f1ac9'
     );
 INSERT INTO public.game(
 	network_id, name, address, result_event_signature)
 	VALUES (
-        5,
+        56,
         'PokerStart',
-        '0xD91e9c8b0B77bDd8cd044B84ED70a8bC21bCaE87', 
+        '0x64B72C684364Df7aAdb8716ddE51650A9131436f', 
+        '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a'
+    );
+
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        42161,
+        'Poker',
+        '0xF020cf34ab78086524199BD92c9F8eDe55126480', 
+        '0xb73b6b634aea9965e3c60d60ac8d2380100c337b6d66167d297351746f4f1ac9'
+    );
+INSERT INTO public.game(
+	network_id, name, address, result_event_signature)
+	VALUES (
+        42161,
+        'PokerStart',
+        '0xF020cf34ab78086524199BD92c9F8eDe55126480', 
         '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a'
     );
