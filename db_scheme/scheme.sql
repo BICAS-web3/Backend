@@ -436,3 +436,11 @@ INSERT INTO public.game(
         '0xF020cf34ab78086524199BD92c9F8eDe55126480', 
         '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a'
     );
+
+INSERT INTO TokenPrice(
+    token_name,
+    price
+) VALUES (
+    'ARB',
+    0.88
+);
