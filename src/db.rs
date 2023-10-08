@@ -588,7 +588,7 @@ impl DB {
             "
             INSERT INTO LastBlock(id, network_id)
             VALUES ($1, $2)
-            ON CONFLICT(id, network_id) DO UPDATE
+            ON CONFLICT(network_id) DO UPDATE
                 SET id = excluded.id
             ",
             block_id,

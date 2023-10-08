@@ -275,19 +275,6 @@
     },
     "query": "\n            SELECT *\n            FROM Nickname\n            WHERE address = $1\n            LIMIT 1\n            "
   },
-  "407b7e5538de238c9c0a4ddedf4e6bb176f83c46d4aca6bd8a3bd6063585a399": {
-    "describe": {
-      "columns": [],
-      "nullable": [],
-      "parameters": {
-        "Left": [
-          "Int8",
-          "Int8"
-        ]
-      }
-    },
-    "query": "\n            INSERT INTO LastBlock(id, network_id)\n            VALUES ($1, $2)\n            ON CONFLICT(id, network_id) DO UPDATE\n                SET id = excluded.id\n            "
-  },
   "4ad051a46bd3ce5e69a09abbc2d9e0f0a3e99c5ef0ca9f32674d4414b26fd6e7": {
     "describe": {
       "columns": [
@@ -875,6 +862,19 @@
       }
     },
     "query": "\n            SELECT DISTINCT name,\n                contract_address,\n                id, \n                network_id\n            FROM Token\n            WHERE network_id = $1\n            "
+  },
+  "74f322e9e07301f3bc293e4f034f3b514b82b2ed63cdcbd27aeadc823240792b": {
+    "describe": {
+      "columns": [],
+      "nullable": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Int8"
+        ]
+      }
+    },
+    "query": "\n            INSERT INTO LastBlock(id, network_id)\n            VALUES ($1, $2)\n            ON CONFLICT(network_id) DO UPDATE\n                SET id = excluded.id\n            "
   },
   "8d23b1263131c4fa79e35302e542892d7b765aec7bb32fa32713bb4d6f1235bd": {
     "describe": {

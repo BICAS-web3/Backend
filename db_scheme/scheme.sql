@@ -251,7 +251,7 @@ CREATE TABLE IF NOT EXISTS LastBlock(
             REFERENCES Network(id)
 );
 
-CREATE UNIQUE INDEX lastblock_unique_idx ON LastBlock(id, network_id);
+CREATE UNIQUE INDEX lastblock_unique_idx ON LastBlock(network_id);
 
 
 -- INITIAL DATA
