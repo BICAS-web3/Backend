@@ -816,7 +816,7 @@ pub mod partner {
                 .map_err(|e| reject::custom(ApiError::DbError(e)))?;
             sites_info.push(PartnerSiteInfo {
                 basic: site,
-                sub_ids: sub_ids,
+                sub_ids,
             })
         }
 
