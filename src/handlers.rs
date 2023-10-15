@@ -782,28 +782,6 @@ pub mod partner {
         Ok(gen_info_response("Wallet was successfully connected"))
     }
 
-    /// Removes partner account
-    ///
-    /// Removes partner account entirely, be careful, as it removes all data, including sites, subids, connected wallets, requires signed signature from the user
-    #[utoipa::path(
-        tag="partner",
-        post,
-        path = "/api/partner/remove",
-        responses(
-            (status = 200, description = "Account was removed", body = InfoText),
-            (status = 500, description = "Internal server error", body = ErrorText),
-        ),
-    )]
-    pub async fn remove_partner(wallet: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
-        db.remove_partner(&wallet)
-            .await
-            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-
-        Ok(gen_info_response(
-            "Partner account was successfully removed",
-        ))
-    }
-
     /// Gets partner account info
     ///
     /// Gets all basic info about partner account, requires signed signature from the user
