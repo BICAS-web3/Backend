@@ -852,6 +852,19 @@ impl DB {
     //     .await
     // }
 
+    pub async fn remove_partner(&self, wallet: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            DELETE FROM Partner
+            WHERE main_wallet=$1
+            "#,
+            wallet
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+    //
     pub async fn get_subid(
         &self,
         wallet: &str,
