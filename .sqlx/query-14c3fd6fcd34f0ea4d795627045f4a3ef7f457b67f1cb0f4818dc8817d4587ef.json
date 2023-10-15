@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO SiteSubId(\n                id,\n                name,\n                url,\n                site_id,\n                partner_id\n            ) \n            SELECT \n                COALESCE(MAX(id)+1,0),\n                $1,\n                $2,\n                $3,\n                $4\n            FROM SiteSubId\n            WHERE site_id=$3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "14c3fd6fcd34f0ea4d795627045f4a3ef7f457b67f1cb0f4818dc8817d4587ef"
+}

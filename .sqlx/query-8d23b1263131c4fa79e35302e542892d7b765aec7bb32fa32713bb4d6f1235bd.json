@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT \n                id as \"id!\",\n                network_id as \"network_id!\",\n                url as \"url!\"\n            FROM RpcUrl \n            WHERE network_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "network_id!",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "url!",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "8d23b1263131c4fa79e35302e542892d7b765aec7bb32fa32713bb4d6f1235bd"
+}

@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Nickname(address, nickname)\n            VALUES ($1, $2)\n            ON CONFLICT(address) DO UPDATE\n                SET nickname = excluded.nickname\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bpchar",
+        "Varchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e70ec3f103f106f1015361ccac39c6c3feb245580f85a6956c8b9dd199e958c6"
+}

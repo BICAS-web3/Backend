@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Bet(\n                transaction_hash,\n                player,\n                timestamp,\n                game_id,\n                wager,\n                token_address,\n                network_id,\n                bets,\n                multiplier,\n                profit\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4,\n                $5,\n                $6,\n                $7,\n                $8,\n                $9,\n                $10\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bpchar",
+        "Bpchar",
+        "Timestamp",
+        "Int8",
+        "Numeric",
+        "Bpchar",
+        "Int8",
+        "Int8",
+        "Float8",
+        "Numeric"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d28c096c589247cda57aff2f0f4802e19ef6708c0d216dd53e340bcee17b314f"
+}

@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO ConnectedWallets(\n                address,\n                timestamp,\n                sub_id_internal,\n                partner_id\n            ) VALUES(\n                $1,\n                $2,\n                $3,\n                $4\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamp",
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "82e65b62f60eb0f20e6455101019129cd7442f50625fada8980ac26af00098aa"
+}
