@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO refclicks(\n                clicks,\n                sub_id_internal,\n                partner_id\n            )\n             VALUES (\n                 1, \n                 $1,\n                 $2\n             )\n             ON CONFLICT(sub_id_internal,partner_id) DO UPDATE\n             SET clicks = refclicks.clicks+1;\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "9b9a7e335907b7b75523c193afc54d62d78fbddfe2c19db6ed22b896fda7763d"
+}

@@ -17,6 +17,9 @@ pub enum ApiError {
 
     #[error("{0}")]
     ArbitraryError(String),
+
+    #[error("The auth signature is too old")]
+    OldSignature,
 }
 
 impl reject::Reject for ApiError {}

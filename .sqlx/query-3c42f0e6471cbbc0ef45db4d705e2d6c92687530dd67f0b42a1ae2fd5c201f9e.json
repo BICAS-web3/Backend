@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO TokenPrice(token_name, price)\n            VALUES ($1, $2)\n            ON CONFLICT(token_name) DO UPDATE\n                SET price = excluded.price\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Float8"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "3c42f0e6471cbbc0ef45db4d705e2d6c92687530dd67f0b42a1ae2fd5c201f9e"
+}

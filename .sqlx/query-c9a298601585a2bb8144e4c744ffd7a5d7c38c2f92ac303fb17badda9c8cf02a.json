@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT * FROM totals;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "bets_amount",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "player_amount",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "sum",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "c9a298601585a2bb8144e4c744ffd7a5d7c38c2f92ac303fb17badda9c8cf02a"
+}

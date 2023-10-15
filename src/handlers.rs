@@ -7,10 +7,13 @@ use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
 #[allow(unused_imports)]
-use crate::models::db_models::{GameInfo, Nickname, Player};
-#[allow(unused_imports)]
-use crate::models::json_requests::SetNickname;
+use crate::models::db_models::{GameInfo, Nickname, Partner, PartnerProgram, Player};
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
+#[allow(unused_imports)]
+use crate::models::json_requests::{
+    AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ConnectWallet, RegisterPartner,
+    SetNickname,
+};
 #[allow(unused_imports)]
 use crate::models::json_responses::{
     Bets, BlockExplorers, ErrorText, InfoText, JsonResponse, NetworkFullInfo, Networks,
@@ -25,6 +28,7 @@ pub use game::*;
 pub use general::*;
 pub use network::*;
 pub use nickname::*;
+pub use partner::*;
 pub use player::*;
 pub use rpcs::*;
 use serde::Serialize;
@@ -582,6 +586,247 @@ pub mod abi {
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::Abi(abi)))
+    }
+}
+
+pub mod partner {
+
+    use crate::models::json_responses::{PartnerInfo, PartnerSiteInfo};
+
+    use super::*;
+
+    /// Register new partner account
+    ///
+    /// Registers new partner account, requires signed signature from the user
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/register",
+        request_body = RegisterPartner,
+        responses(
+            (status = 200, description = "Partner account was created", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn register_partner(
+        data: json_requests::RegisterPartner,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.create_partner(
+            Partner {
+                name: data.name,
+                country: data.country,
+                traffic_source: data.traffic_source,
+                users_amount_a_month: data.users_amount_a_month,
+                main_wallet: data.main_wallet,
+                program: PartnerProgram::firstMonth,
+                is_verified: false,
+            },
+            &[],
+        )
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Partner account has been created"))
+    }
+
+    /// Adds contacts to the account
+    ///
+    /// Adds contact info to the existinf partner account, requires signed signature from the user
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/contacts/add",
+        request_body = AddPartnerContacts,
+        responses(
+            (status = 200, description = "Partner account was created", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn add_contacts(
+        wallet: String,
+        data: json_requests::AddPartnerContacts,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.add_partner_contacts(
+            &wallet,
+            &data
+                .contacts
+                .into_iter()
+                .map(|c| (c.name, c.url))
+                .collect::<Vec<(String, String)>>(),
+        )
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Contacts were added"))
+    }
+
+    /// Adds new site to the partner
+    ///
+    /// Adds new site instaance to the partner account, requires signed signature from the user
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/site/add",
+        request_body = AddPartnerSite,
+        responses(
+            (status = 200, description = "Site was added", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn add_partner_site(
+        wallet: String,
+        data: json_requests::AddPartnerSite,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.add_partner_site(&wallet, &data.url, &data.name)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Site was added"))
+    }
+
+    /// Adds new subb id
+    ///
+    /// Adds new sub id to the existing site on partner's account, requires signed signature from the user
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/site/subid/add",
+        request_body = AddPartnerSubid,
+        responses(
+            (status = 200, description = "SubId was added", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn add_partner_subid(
+        wallet: String,
+        data: json_requests::AddPartnerSubid,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.add_partner_subid(data.internal_site_id, &wallet, &data.url, &data.name)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Sub id was added"))
+    }
+
+    /// Adds click to subid
+    ///
+    /// Adds click to sub id of the user's site
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/site/subid/click/{partner_address}/{site_id}/{sub_id}",
+        responses(
+            (status = 200, description = "Click was accepted", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("partner_address" = String, Path, description = "ETH address of the partner's account"),
+            ("site_id" = i64, Path, description = "Relative id of the site, registered on partner's account"),
+            ("sub_id" = i64, Path, description = "Relative subid ofthe site, registered on partner's account"),
+        ),
+    )]
+    pub async fn click_partner_subid(
+        wallet: String,
+        site_id: i64,
+        sub_id: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let subid = db
+            .get_subid(&wallet, site_id, sub_id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        db.add_click(&wallet, subid.internal_id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Click was successfully added"))
+    }
+
+    /// Connects new wallet with the given subid of the partner
+    ///
+    /// Connects new wallet with the given subid of the partner, requires signed signature from the user
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/site/subid/connect",
+        request_body = ConnectWallet,
+        responses(
+            (status = 200, description = "Wallet was connected", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn connect_wallet(
+        data: json_requests::ConnectWallet,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let time = chrono::offset::Utc::now();
+        let subid = db
+            .get_subid(&data.partner_wallet, data.site_id, data.sub_id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        db.add_ref_wallet(
+            &data.user_wallet,
+            time,
+            subid.internal_id,
+            &data.partner_wallet,
+        )
+        .await
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Wallet was successfully connected"))
+    }
+
+    /// Gets partner account info
+    ///
+    /// Gets all basic info about partner account, requires signed signature from the user
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/get",
+        responses(
+            (status = 200, description = "Partner account was created", body = PartnerInfo),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_partner(wallet: String, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let basic = db
+            .get_partner(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        let contacts = db
+            .get_partner_contacts(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        let sites = db
+            .get_partner_sites(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        let mut sites_info: Vec<PartnerSiteInfo> = Vec::with_capacity(sites.len());
+        for site in sites {
+            let sub_ids = db
+                .get_site_subids(site.internal_id)
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            sites_info.push(PartnerSiteInfo {
+                basic: site,
+                sub_ids,
+            })
+        }
+
+        Ok(gen_arbitrary_response(ResponseBody::PartnerInfo(
+            PartnerInfo {
+                basic,
+                contacts,
+                sites: sites_info,
+            },
+        )))
     }
 }
 

@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT * FROM GameAbi WHERE signature=$1 LIMIT 1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "signature",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "types",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "names",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bpchar"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "2cc72026e500aff55ca92bb883dfeded305b5af2f49c486bff2a7e473a5a7867"
+}

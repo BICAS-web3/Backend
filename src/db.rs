@@ -2,10 +2,12 @@ use crate::{
     config::DatabaseSettings,
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock, LatestGames,
-        NetworkInfo, Nickname, Player, PlayerTotals, RpcUrl, Token, TokenPrice, Totals,
+        NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite, Player,
+        PlayerTotals, RpcUrl, SiteSubId, Token, TokenPrice, Totals,
     },
 };
 
+use chrono::{DateTime, Utc};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use tracing::info;
 
@@ -609,6 +611,323 @@ impl DB {
             ",
             refer_to,
             referal
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn create_partner(
+        &self,
+        partner: Partner,
+        contacts: &[(String, String)],
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Partner(
+                name,
+                country,
+                traffic_source,
+                users_amount_a_month,
+                main_wallet,
+                program,
+                is_verified
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5,
+                $6,
+                FALSE
+            )
+            "#,
+            partner.name,
+            partner.country,
+            partner.traffic_source,
+            partner.users_amount_a_month,
+            partner.main_wallet,
+            partner.program as PartnerProgram
+        )
+        .execute(&self.db_pool)
+        .await?;
+
+        self.add_partner_contacts(&partner.main_wallet, contacts)
+            .await?;
+
+        Ok(())
+    }
+
+    pub async fn get_partner(&self, wallet: &str) -> Result<Partner, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * 
+            FROM Partner
+            WHERE main_wallet=$1
+            LIMIT 1
+            "#,
+            wallet
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn add_partner_contacts(
+        &self,
+        wallet: &str,
+        contacts: &[(String, String)],
+    ) -> Result<(), sqlx::Error> {
+        for (name, url) in contacts {
+            sqlx::query!(
+                r#"
+                INSERT INTO PartnerContact(
+                    name,
+                    url,
+                    partner_id
+                ) VALUES (
+                    $1,
+                    $2,
+                    $3
+                )
+                "#,
+                name,
+                url,
+                wallet
+            )
+            .execute(&self.db_pool)
+            .await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn get_partner_contacts(
+        &self,
+        wallet: &str,
+    ) -> Result<Vec<PartnerContact>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            PartnerContact,
+            r#"
+            SELECT * 
+            FROM PartnerContact
+            WHERE partner_id=$1
+            "#,
+            wallet
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    pub async fn add_partner_site(
+        &self,
+        wallet: &str,
+        url: &str,
+        name: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO PartnerSite(
+                id,
+                name,
+                url,
+                partner_id
+            ) 
+            SELECT 
+                COALESCE(MAX(id)+1,0),
+                $1,
+                $2,
+                $3
+            FROM PartnerSite
+            WHERE partner_id=$3
+            "#,
+            name,
+            url,
+            wallet
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn get_partner_sites(&self, wallet: &str) -> Result<Vec<PartnerSite>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            PartnerSite,
+            r#"
+            SELECT *
+            FROM PartnerSite
+            WHERE partner_id=$1
+            "#,
+            wallet
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    // pub async fn get_partner_site(&self, wallet: &str) -> Result<PartnerSite, sqlx::Error> {
+    //     sqlx::query_as_unchecked!(
+    //         PartnerSite,
+    //         r#"
+    //         SELECT *
+    //         FROM PartnerSite
+    //         WHERE partner_id=$1
+    //         LIMIT 1
+    //         "#,
+    //         wallet
+    //     )
+    //     .fetch_one(&self.db_pool)
+    //     .await
+    // }
+
+    pub async fn add_partner_subid(
+        &self,
+        internal_site_id: i64,
+        wallet: &str,
+        url: &str,
+        name: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO SiteSubId(
+                id,
+                name,
+                url,
+                site_id,
+                partner_id
+            ) 
+            SELECT 
+                COALESCE(MAX(id)+1,0),
+                $1,
+                $2,
+                $3,
+                $4
+            FROM SiteSubId
+            WHERE site_id=$3
+            "#,
+            name,
+            url,
+            internal_site_id,
+            wallet
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn get_site_subids(
+        &self,
+        internal_site_id: i64,
+    ) -> Result<Vec<SiteSubId>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            SiteSubId,
+            r#"
+            SELECT *
+            FROM SiteSubId
+            WHERE site_id=$1
+            "#,
+            internal_site_id
+        )
+        .fetch_all(&self.db_pool)
+        .await
+    }
+
+    // pub async fn get_site_subid(
+    //     &self,
+    //     internal_site_id: i64,
+    //     subid: i64,
+    // ) -> Result<SiteSubId, sqlx::Error> {
+    //     sqlx::query_as_unchecked!(
+    //         SiteSubId,
+    //         r#"
+    //         SELECT *
+    //         FROM SiteSubId
+    //         WHERE site_id=$1
+    //             AND id=$2
+    //         LIMIT 1
+    //         "#,
+    //         internal_site_id,
+    //         subid
+    //     )
+    //     .fetch_one(&self.db_pool)
+    //     .await
+    // }
+
+    pub async fn get_subid(
+        &self,
+        wallet: &str,
+        site_id: i64,
+        sub_id: i64,
+    ) -> Result<SiteSubId, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            SiteSubId,
+            r#"
+            SELECT 
+                sitesubid.internal_id,
+                sitesubid.id,
+                sitesubid.name,
+                sitesubid.url,
+                sitesubid.site_id,
+                sitesubid.partner_id
+            FROM partnersite 
+            INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id
+            WHERE partnersite.partner_id=$1 AND partnersite.id=$2 AND sitesubid.id=$3
+            "#,
+            wallet,
+            site_id,
+            sub_id
+        ).fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn add_click(&self, partner: &str, sub_id: i64) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO refclicks(
+                clicks,
+                sub_id_internal,
+                partner_id
+            )
+             VALUES (
+                 1, 
+                 $1,
+                 $2
+             )
+             ON CONFLICT(sub_id_internal,partner_id) DO UPDATE
+             SET clicks = refclicks.clicks+1;
+            "#,
+            sub_id,
+            partner
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
+    pub async fn add_ref_wallet(
+        &self,
+        address: &str,
+        timestamp: DateTime<Utc>,
+        sub_id_internal: i64,
+        partner_wallet: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO ConnectedWallets(
+                address,
+                timestamp,
+                sub_id_internal,
+                partner_id
+            ) VALUES(
+                $1,
+                $2,
+                $3,
+                $4
+            )
+            "#,
+            address,
+            timestamp.naive_utc(),
+            sub_id_internal,
+            partner_wallet
         )
         .execute(&self.db_pool)
         .await

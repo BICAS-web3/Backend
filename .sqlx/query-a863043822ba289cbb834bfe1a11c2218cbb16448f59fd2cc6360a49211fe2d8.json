@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                sitesubid.internal_id,\n                sitesubid.id,\n                sitesubid.name,\n                sitesubid.url,\n                sitesubid.site_id,\n                sitesubid.partner_id\n            FROM partnersite \n            INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id\n            WHERE partnersite.partner_id=$1 AND partnersite.id=$2 AND sitesubid.id=$3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "internal_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "site_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 5,
+        "name": "partner_id",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "a863043822ba289cbb834bfe1a11c2218cbb16448f59fd2cc6360a49211fe2d8"
+}

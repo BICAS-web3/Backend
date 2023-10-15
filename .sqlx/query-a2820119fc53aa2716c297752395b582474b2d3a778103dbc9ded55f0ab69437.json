@@ -1,0 +1,107 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT *\n                 FROM BetInfo\n                WHERE player = $1\n                ORDER BY timestamp DESC\n                LIMIT $2\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "transaction_hash",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "player",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "player_nickname",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "timestamp",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 5,
+        "name": "game_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 6,
+        "name": "game_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "wager",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "token_address",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "token_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "network_id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 11,
+        "name": "network_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 12,
+        "name": "bets",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 13,
+        "name": "multiplier",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 14,
+        "name": "profit",
+        "type_info": "Numeric"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Bpchar",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "a2820119fc53aa2716c297752395b582474b2d3a778103dbc9ded55f0ab69437"
+}

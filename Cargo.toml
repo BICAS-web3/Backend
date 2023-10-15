@@ -12,19 +12,18 @@ hmac = "0.12.1"
 sha2 = "0.10.2"
 serde = "1.0"
 serde_json = "1.0"
-sqlx = { version = "0.6.0", features = [
+sqlx = { version = "0.7.2", features = [
 	"postgres",
 	"runtime-tokio-rustls",
 	"chrono",
-	"offline",
 	"macros",
-	"bigdecimal"
+	"bigdecimal",
 ] }
 tracing = "0.1.37"
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
 thiserror = "1.0.44"
-chrono = {version = "0.4.26", features = ["serde", "clock"]}
+chrono = { version = "0.4.26", features = ["serde", "clock"] }
 dotenvy = "0.15.7"
 lazy_static = "1.4.0"
 web3 = "0.19"
@@ -33,7 +32,7 @@ censor = "0.3.0"
 futures = "0.3.28"
 ethabi = "18.0.0"
 serde_with = "3.1"
-utoipa = {version = "3", features = ["chrono", "decimal"]}
+utoipa = { version = "3", features = ["chrono", "decimal"] }
 utoipa-swagger-ui = "3.1.5"
 rust_decimal = "1.32"
 rust_decimal_macros = "1.32"

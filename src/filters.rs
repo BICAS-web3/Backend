@@ -1,3 +1,6 @@
+use std::time::SystemTime;
+use std::time::UNIX_EPOCH;
+
 use crate::communication::WsDataFeedReceiver;
 use crate::communication::WsDataFeedSender;
 use crate::db::DB;
@@ -51,6 +54,73 @@ async fn with_signature_referal<'a>(
     }
 }
 
+async fn with_signature_partner<'a>(
+    credentials: json_requests::RegisterPartner,
+) -> Result<json_requests::RegisterPartner, warp::Rejection> {
+    let msg = format!(
+        "{} {} {} {} {}",
+        &credentials.name,
+        &credentials.country,
+        &credentials.traffic_source,
+        &credentials.users_amount_a_month,
+        &credentials.main_wallet
+    );
+    if tools::verify_signature(&credentials.main_wallet, &msg, &credentials.signature) {
+        Ok(credentials)
+    } else {
+        Err(reject::custom(ApiError::BadSignature(
+            credentials.main_wallet.to_string(),
+            msg.to_string(),
+            credentials.signature,
+        )))
+    }
+}
+
+async fn with_signature_connect_wallet<'a>(
+    credentials: json_requests::ConnectWallet,
+) -> Result<json_requests::ConnectWallet, warp::Rejection> {
+    let msg = format!(
+        "CONNECT WALLET {} {} {} {}",
+        &credentials.partner_wallet,
+        &credentials.user_wallet,
+        &credentials.site_id,
+        &credentials.sub_id,
+    );
+    if tools::verify_signature(&credentials.user_wallet, &msg, &credentials.signature) {
+        Ok(credentials)
+    } else {
+        Err(reject::custom(ApiError::BadSignature(
+            credentials.user_wallet.to_string(),
+            msg.to_string(),
+            credentials.signature,
+        )))
+    }
+}
+
+async fn with_auth_partner<'a>(
+    signature: String,
+    timestamp: u64,
+    wallet: String,
+) -> Result<String, warp::Rejection> {
+    let time = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+    if time as i64 - timestamp as i64 > 600 {
+        return Err(reject::custom(ApiError::OldSignature));
+    }
+    let msg = format!("PARTNER AUTH {} {}", &wallet, timestamp);
+    if tools::verify_signature(&wallet, &msg, &signature) {
+        Ok(wallet)
+    } else {
+        Err(reject::custom(ApiError::BadSignature(
+            wallet,
+            msg.to_string(),
+            signature,
+        )))
+    }
+}
+
 fn json_body_set_nickname(
 ) -> impl Filter<Extract = (json_requests::SetNickname,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -58,6 +128,31 @@ fn json_body_set_nickname(
 
 fn json_body_subscribe_referal(
 ) -> impl Filter<Extract = (json_requests::CreateReferal,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_register_partner(
+) -> impl Filter<Extract = (json_requests::RegisterPartner,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_add_partner_contacts(
+) -> impl Filter<Extract = (json_requests::AddPartnerContacts,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_add_partner_site(
+) -> impl Filter<Extract = (json_requests::AddPartnerSite,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_add_partner_subid(
+) -> impl Filter<Extract = (json_requests::AddPartnerSubid,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn json_body_connect_wallet(
+) -> impl Filter<Extract = (json_requests::ConnectWallet,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
@@ -313,6 +408,112 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
     )
 }
 
+// PARTNERS REFERALS
+pub fn register_partner(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("register")
+        .and(warp::post())
+        .and(json_body_register_partner())
+        .and_then(with_signature_partner)
+        .and(with_db(db))
+        .and_then(handlers::register_partner)
+}
+
+pub fn get_partner(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(with_db(db))
+        .and_then(handlers::get_partner)
+}
+
+pub fn add_partner_contacts(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("add")
+        .and(warp::post())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(json_body_add_partner_contacts())
+        .and(with_db(db))
+        .and_then(handlers::add_contacts)
+}
+
+pub fn add_partner_site(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("add")
+        .and(warp::post())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(json_body_add_partner_site())
+        .and(with_db(db))
+        .and_then(handlers::add_partner_site)
+}
+
+pub fn add_partner_subid(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("add")
+        .and(warp::post())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(json_body_add_partner_subid())
+        .and(with_db(db))
+        .and_then(handlers::add_partner_subid)
+}
+
+pub fn click_partner_subid(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("click" / String / i64 / i64)
+        .and(warp::post())
+        .and(with_db(db))
+        .and_then(handlers::click_partner_subid)
+}
+
+pub fn connect_wallet_subid(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("connect")
+        .and(warp::post())
+        .and(json_body_connect_wallet())
+        .and_then(with_signature_connect_wallet)
+        .and(with_db(db))
+        .and_then(handlers::connect_wallet)
+}
+
+pub fn partners(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("partner").and(
+        register_partner(db.clone())
+            .or(get_partner(db.clone()))
+            .or(warp::path("contacts").and(add_partner_contacts(db.clone())))
+            .or(warp::path("site").and(
+                add_partner_site(db.clone()).or(warp::path("subid").and(
+                    add_partner_subid(db.clone())
+                        .or(click_partner_subid(db.clone()))
+                        .or(connect_wallet_subid(db.clone())),
+                )),
+            )),
+    )
+}
+
 // GENERAL
 pub fn get_totals(
     db: DB,
@@ -348,6 +549,7 @@ pub fn init_filters(
         .or(abi(db.clone()))
         .or(bets(db.clone()))
         .or(general(db.clone()))
+        .or(partners(db.clone()))
         .or(warp::path!("updates")
             .and(warp::ws())
             .and(with_db(db))

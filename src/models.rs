@@ -8,6 +8,68 @@ pub mod db_models {
     use serde_with::{serde_as, DisplayFromStr};
     use sqlx::types::BigDecimal;
 
+    #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize, ToSchema)]
+    #[sqlx(type_name = "partnerprogram")]
+    #[allow(non_camel_case_types)]
+    pub enum PartnerProgram {
+        firstMonth,
+        novice,
+        beginner,
+        intermediate,
+        advanced,
+        pro,
+        god,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Partner {
+        //pub id: i64,
+        pub name: String,
+        pub country: String,
+        pub traffic_source: String,
+        pub users_amount_a_month: i64,
+        pub main_wallet: String,
+        pub program: PartnerProgram,
+        pub is_verified: bool,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct PartnerSite {
+        pub internal_id: i64,
+        pub id: i64,
+        pub name: String,
+        pub url: String,
+        pub partner_id: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct PartnerContact {
+        pub id: i64,
+        pub name: String,
+        pub url: String,
+        pub partner_id: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct SiteSubId {
+        pub internal_id: i64,
+        pub id: i64,
+        pub name: String,
+        pub url: String,
+        pub site_id: i64,
+        pub partner_id: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct RefClicks {
+        pub id: i64,
+        pub clicks: i64,
+
+        //pub sub_id: i64,
+        pub sub_id_internal: i64,
+        pub partner_id: String,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug)]
     pub struct LastBlock {
         pub id: i64,
@@ -198,8 +260,8 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Player, PlayerTotals,
-        RpcUrl, Token, Totals,
+        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Partner,
+        PartnerContact, PartnerSite, Player, PlayerTotals, RpcUrl, SiteSubId, Token, Totals,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -247,6 +309,20 @@ pub mod json_responses {
         LatestGames(LatestGames),
         PlayerTotals(PlayerTotals),
         TokenPrice(TokenPrice),
+        PartnerInfo(PartnerInfo),
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct PartnerInfo {
+        pub basic: Partner,
+        pub contacts: Vec<PartnerContact>,
+        pub sites: Vec<PartnerSiteInfo>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct PartnerSiteInfo {
+        pub basic: PartnerSite,
+        pub sub_ids: Vec<SiteSubId>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -468,5 +544,48 @@ pub mod json_requests {
         SubscribeAll,
         UnsubscribeAll,
         Ping,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct RegisterPartner {
+        pub name: String,
+        pub country: String,
+        pub traffic_source: String,
+        pub users_amount_a_month: i64,
+        pub main_wallet: String,
+        pub signature: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct PartnerContactBasic {
+        pub name: String,
+        pub url: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct AddPartnerContacts {
+        pub contacts: Vec<PartnerContactBasic>,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct AddPartnerSite {
+        pub name: String,
+        pub url: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct AddPartnerSubid {
+        pub name: String,
+        pub url: String,
+        pub internal_site_id: i64,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct ConnectWallet {
+        pub partner_wallet: String,
+        pub user_wallet: String,
+        pub site_id: i64,
+        pub sub_id: i64,
+        pub signature: String,
     }
 }
