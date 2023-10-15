@@ -41,7 +41,8 @@ use warp::{
             handlers::click_partner_subid,
             handlers::add_partner_subid,
             handlers::add_partner_site,
-            handlers::add_contacts
+            handlers::add_contacts,
+            handlers::remove_partner
         ),
         components(schemas(
             json_requests::SetNickname,
