@@ -254,6 +254,84 @@ CREATE TABLE IF NOT EXISTS LastBlock(
 CREATE UNIQUE INDEX lastblock_unique_idx ON LastBlock(network_id);
 
 
+-- PARTNERS
+
+-- countries list
+-- CREATE TYPE country AS ENUM(
+
+-- );
+
+CREATE TYPE PartnerProgram AS ENUM(
+    'firstMonth',
+    'novice',
+    'beginner',
+    'intermediate',
+    'advanced',
+    'pro',
+    'god'
+);
+
+CREATE TABLE IF NOT EXISTS Partner(
+    --id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    country TEXT NOT NULL,
+    traffic_source TEXT NOT NULL,
+    users_amount_a_month BIGINT NOT NULL,
+    main_wallet TEXT NOT NULL PRIMARY KEY,
+    program PartnerProgram NOT NULL,
+    is_verified boolean NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS PartnerContact(
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS PartnerSite(
+    internal_id BIGSERIAL PRIMARY KEY, 
+    id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT NOT NULL,
+    
+    partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
+);
+--CREATE UNIQUE INDEX partnersite_unique_idx ON PartnerSite(name, partner_id);
+CREATE UNIQUE INDEX partnersite_id_unique_idx ON PartnerSite(id, partner_id);
+
+CREATE TABLE IF NOT EXISTS SiteSubId(
+    internal_id BIGSERIAL PRIMARY KEY, 
+    id BIGINT NOT NULL,
+    name TEXT NOT NULL,
+    url TEXT,
+    
+    site_id BIGINT NOT NULL REFERENCES PartnerSite(internal_id) ON DELETE CASCADE,
+    partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX subid_unique_idx ON SiteSubId(id, site_id);
+
+CREATE TABLE IF NOT EXISTS RefClicks(
+    id BIGSERIAL PRIMARY KEY,
+    clicks BIGINT NOT NULL,
+    
+    --sub_id BIGINT NOT NULL,
+    sub_id_internal BIGINT NOT NULL REFERENCES SiteSubId(internal_id) ON DELETE CASCADE,
+    partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
+);
+CREATE UNIQUE INDEX refclicks_unique_idx ON RefClicks(sub_id_internal, partner_id);
+
+CREATE TABLE IF NOT EXISTS ConnectedWallets(
+    id BIGSERIAL PRIMARY KEY,
+    address TEXT NOT NULL UNIQUE,
+    timestamp TIMESTAMP NOT NULL,
+
+    --sub_id BIGINT NOT NULL,
+    sub_id_internal BIGINT NOT NULL REFERENCES SiteSubId(internal_id) ON DELETE CASCADE,
+    partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
+);
+--CREATE UNIQUE INDEX connectedwallets_unique_idx ON ConnectedWallets(sub_id);
+
 -- INITIAL DATA
 
 -- nativecurrency
@@ -333,35 +411,35 @@ INSERT INTO public.gameabi(
 	signature, types, names)
 	VALUES (
         '0x063ba2c91a70f945b84c24531b0de813d66f430987169cb7d878431c04cb0004', 
-        '["uint256", "uint256", "address", "uint8[]", "uint256[]", "uint32"]', 
+        '['uint256', 'uint256', 'address', 'uint8[]', 'uint256[]', 'uint32']', 
         'wager payout tokenAddress coinOutcomes payouts numGames'
     );
 INSERT INTO public.gameabi(
 	signature, types, names)
 	VALUES (
         '0x090dbd65630d04a5178ecb9346e0cdcc299215a135c6eb7ecd530ce00dfa44d2', 
-        '["uint256","uint256","address","uint256[]","uint256[]","uint32"]', 
+        '['uint256','uint256','address','uint256[]','uint256[]','uint32']', 
         'wager payout tokenAddress diceOutcomes payouts numGames'
     );
 INSERT INTO public.gameabi(
 	signature, types, names)
 	VALUES (
         '0x10926c19b020b305e529b4fbe64764ce71360378f742c3e3d04e62d586bf9c0e', 
-        '["uint256","uint256","address","uint8[]","uint8[]","uint256[]","uint32"]', 
+        '['uint256','uint256','address','uint8[]','uint8[]','uint256[]','uint32']', 
         'wager payout tokenAddress outcomes randomActions payouts numGames'
     );
 INSERT INTO public.gameabi(
 	signature, types, names)
 	VALUES (
         '0xb73b6b634aea9965e3c60d60ac8d2380100c337b6d66167d297351746f4f1ac9', 
-        '["uint256","uint256","address","uint8[10]","uint256"]', 
+        '['uint256','uint256','address','uint8[10]','uint256']', 
         'wager payout tokenAddress playerHand outcome'
     );
 INSERT INTO public.gameabi(
 	signature, types, names)
 	VALUES (
         '0xc3b36130c75d38724a3591fd74cfe9738bf5234994a2bebe0d81ec71e012282a', 
-        '["uint8[10]"]', 
+        '['uint8[10]']', 
         'playerHand'
     );
 

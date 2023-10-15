@@ -35,10 +35,24 @@ use warp::{
             handlers::get_bets_for_game,
             handlers::get_latest_games,
             handlers::get_totals,
+            handlers::register_partner,
+            handlers::get_partner,
+            handlers::connect_wallet,
+            handlers::click_partner_subid,
+            handlers::add_partner_subid,
+            handlers::add_partner_site,
+            handlers::add_contacts
         ),
         components(schemas(
             json_requests::SetNickname,
             json_requests::ByNetworkId,
+            json_requests::RegisterPartner,
+            json_requests::PartnerContactBasic,
+            json_requests::AddPartnerContacts,
+            json_requests::AddPartnerSite,
+            json_requests::AddPartnerSubid,
+            json_requests::ConnectWallet,
+
             json_responses::JsonResponse,
             json_responses::ResponseBody,
             json_responses::ErrorText,
@@ -50,6 +64,9 @@ use warp::{
             json_responses::NetworkFullInfo,
             json_responses::Networks,
             json_responses::LatestGames,
+            json_responses::PartnerInfo,
+            json_responses::PartnerSiteInfo,
+
             db_models::Totals,
             db_models::BetInfo,
             db_models::BlockExplorerUrl,
@@ -59,7 +76,14 @@ use warp::{
             db_models::Nickname,
             db_models::Player,
             db_models::RpcUrl,
-            db_models::Token
+            db_models::Token,
+            db_models::PartnerProgram,
+            db_models::Partner,
+            db_models::PartnerSite,
+            db_models::PartnerContact,
+            db_models::SiteSubId,
+            db_models::RefClicks,
+
         )),
         tags(
             (name = "Core REST API", description = "Core REST API")
