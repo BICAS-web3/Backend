@@ -552,7 +552,7 @@ impl DB {
             SELECT 
                     COUNT(bet.id) AS bets_amount,
                     (SELECT 
-                        SUM((bet.wager/1000000000000000000)*price.price) as total_wagered_sum
+                        SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum
                             from bet
                             INNER JOIN (SELECT 
                                 token.name AS name,
