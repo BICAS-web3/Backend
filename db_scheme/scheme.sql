@@ -226,7 +226,7 @@ CREATE VIEW Totals AS
         COUNT(bet.id) AS bets_amount,
         COUNT(DISTINCT bet.player) AS player_amount,
         (SELECT 
-            SUM((bet.wager/1000000000000000000)*price.price)
+            SUM((bet.wager/1000000000000000000)*bet.bets*price.price)
                 from bet
                 INNER JOIN (SELECT 
                     token.name AS name,
