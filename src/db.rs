@@ -2,8 +2,8 @@ use crate::{
     config::DatabaseSettings,
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock, LatestGames,
-        NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite, Player,
-        PlayerTotals, RpcUrl, SiteSubId, Token, TokenPrice, Totals,
+        Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite,
+        Player, PlayerTotals, RpcUrl, SiteSubId, Token, TokenPrice, Totals,
     },
 };
 
@@ -932,5 +932,30 @@ impl DB {
         .execute(&self.db_pool)
         .await
         .map(|_| ())
+    }
+
+    pub async fn query_leaderboard(&self, limit: i64) -> Result<Vec<Leaderboard>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Leaderboard,
+            r#"
+            select bet.player, bet.total_wagered_sum, nickname.nickname from (SELECT 
+                bet.player,
+                                  SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum
+                                      from bet
+                                      INNER JOIN (SELECT 
+                                          token.name AS name,
+                                          token.contract_address AS address,
+                                          tokenprice.price AS price
+                                  FROM token
+                                  INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                                      ON bet.token_address = price.address
+                      group by bet.player) as bet
+                      left join nickname ON bet.player=nickname.address
+                      order by total_wagered_sum DESC
+                      LIMIT $1;
+            "#,
+            limit
+        ).fetch_all(&self.db_pool)
+        .await
     }
 }

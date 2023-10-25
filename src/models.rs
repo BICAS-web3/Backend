@@ -8,6 +8,13 @@ pub mod db_models {
     use serde_with::{serde_as, DisplayFromStr};
     use sqlx::types::BigDecimal;
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Leaderboard {
+        pub player: String,
+        pub total_wagered_sum: f64,
+        pub nickname: Option<String>,
+    }
+
     #[derive(Clone, Debug, PartialEq, PartialOrd, sqlx::Type, Deserialize, Serialize, ToSchema)]
     #[sqlx(type_name = "partnerprogram")]
     #[allow(non_camel_case_types)]

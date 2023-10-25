@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            select bet.player, bet.total_wagered_sum, nickname.nickname from (SELECT \n                bet.player,\n                                  SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum\n                                      from bet\n                                      INNER JOIN (SELECT \n                                          token.name AS name,\n                                          token.contract_address AS address,\n                                          tokenprice.price AS price\n                                  FROM token\n                                  INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price\n                                      ON bet.token_address = price.address\n                      group by bet.player) as bet\n                      left join nickname ON bet.player=nickname.address\n                      order by total_wagered_sum DESC\n                      LIMIT $1;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "player",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "total_wagered_sum",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "nickname",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "372d528a5a173df8ca625afef1f31d28ec73cbd01caf8efe298b447635a50073"
+}
