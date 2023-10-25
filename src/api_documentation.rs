@@ -41,7 +41,8 @@ use warp::{
             handlers::click_partner_subid,
             handlers::add_partner_subid,
             handlers::add_partner_site,
-            handlers::add_contacts
+            handlers::add_contacts,
+            handlers::get_leaderboard
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -83,6 +84,7 @@ use warp::{
             db_models::PartnerContact,
             db_models::SiteSubId,
             db_models::RefClicks,
+            db_models::Leaderboard,
 
         )),
         tags(

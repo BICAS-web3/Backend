@@ -7,7 +7,7 @@ use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
 #[allow(unused_imports)]
-use crate::models::db_models::{GameInfo, Nickname, Partner, PartnerProgram, Player};
+use crate::models::db_models::{GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player};
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
@@ -852,6 +852,29 @@ pub mod general {
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::Totals(totals)))
+    }
+
+    /// Get leaderboard data
+    ///
+    /// Gets the leaderboard
+    #[utoipa::path(
+        tag="general",
+        get,
+        path = "/api/general/leaderboard",
+        responses(
+            (status = 200, description = "Leaderboard data, 20 records max", body = Vec<Leaderboard>),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_leaderboard(db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let leaderboard = db
+            .query_leaderboard(20)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Leaderboard(
+            leaderboard,
+        )))
     }
 }
 

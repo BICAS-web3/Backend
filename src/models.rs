@@ -267,7 +267,7 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, NetworkInfo, Nickname, Partner,
+        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard, NetworkInfo, Nickname, Partner,
         PartnerContact, PartnerSite, Player, PlayerTotals, RpcUrl, SiteSubId, Token, Totals,
     };
     use super::*;
@@ -317,6 +317,7 @@ pub mod json_responses {
         PlayerTotals(PlayerTotals),
         TokenPrice(TokenPrice),
         PartnerInfo(PartnerInfo),
+        Leaderboard(Vec<Leaderboard>),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

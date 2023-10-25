@@ -522,10 +522,19 @@ pub fn get_totals(
         .and(with_db(db))
         .and_then(handlers::get_totals)
 }
+
+pub fn get_leaderboard(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("leaderboard")
+        .and(with_db(db))
+        .and_then(handlers::get_leaderboard)
+}
+
 pub fn general(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("general").and(get_totals(db))
+    warp::path("general").and(get_totals(db.clone()).or(get_leaderboard(db)))
 }
 
 // pub fn get_full_game(
