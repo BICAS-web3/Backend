@@ -6,7 +6,7 @@ use crate::communication::WsDataFeedSender;
 use crate::db::DB;
 use crate::errors::ApiError;
 use crate::handlers;
-use crate::models::json_requests;
+use crate::models::{db_models::TimeBoundaries, json_requests, LeaderboardType};
 use crate::tools;
 use warp::reject;
 use warp::Filter;
@@ -526,7 +526,7 @@ pub fn get_totals(
 pub fn get_leaderboard(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("leaderboard")
+    warp::path!("leaderboard" / LeaderboardType / TimeBoundaries)
         .and(with_db(db))
         .and_then(handlers::get_leaderboard)
 }

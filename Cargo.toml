@@ -36,3 +36,5 @@ utoipa = { version = "3", features = ["chrono", "decimal"] }
 utoipa-swagger-ui = "3.1.5"
 rust_decimal = "1.32"
 rust_decimal_macros = "1.32"
+# strum = "0.25.0"
+# strum_macros = "0.25.3"

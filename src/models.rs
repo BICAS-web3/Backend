@@ -1,5 +1,26 @@
+use std::str::FromStr;
+
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
+
+#[derive(Debug, Clone, ToSchema)]
+#[schema(rename_all = "lowercase")]
+pub enum LeaderboardType {
+    Volume,
+    Profit,
+}
+
+impl FromStr for LeaderboardType {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "volume" => Ok(Self::Volume),
+            "profit" => Ok(Self::Profit),
+            _ => Err("No such variant was found in enum LeaderboardType"),
+        }
+    }
+}
 
 pub mod db_models {
     use super::*;
@@ -8,10 +29,33 @@ pub mod db_models {
     use serde_with::{serde_as, DisplayFromStr};
     use sqlx::types::BigDecimal;
 
+    #[derive(Debug, Clone, ToSchema)]
+    #[schema(rename_all = "lowercase")]
+    pub enum TimeBoundaries {
+        Daily,
+        Weekly,
+        Monthly,
+        All,
+    }
+
+    impl FromStr for TimeBoundaries {
+        type Err = &'static str;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            match s {
+                "daily" => Ok(Self::Daily),
+                "weekly" => Ok(Self::Weekly),
+                "monthly" => Ok(Self::Monthly),
+                "all" => Ok(Self::All),
+                _ => Err("No such variant was found in enum TimeBoundaries"),
+            }
+        }
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct Leaderboard {
         pub player: String,
-        pub total_wagered_sum: f64,
+        pub total: f64,
         pub nickname: Option<String>,
     }
 

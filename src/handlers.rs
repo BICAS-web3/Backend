@@ -831,6 +831,8 @@ pub mod partner {
 }
 
 pub mod general {
+    use crate::models::{db_models::TimeBoundaries, LeaderboardType};
+
     use super::*;
 
     /// Get totals
@@ -860,17 +862,26 @@ pub mod general {
     #[utoipa::path(
         tag="general",
         get,
-        path = "/api/general/leaderboard",
+        path = "/api/general/leaderboard/{type}/{time_boundaries}",
         responses(
             (status = 200, description = "Leaderboard data, 20 records max", body = Vec<Leaderboard>),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
+        params(
+            ("type" = LeaderboardType, Path, description = "Type of the leaderboard data volume/profit"),
+            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch leaderboard info"),
+        ),
     )]
-    pub async fn get_leaderboard(db: DB) -> Result<WarpResponse, warp::Rejection> {
-        let leaderboard = db
-            .query_leaderboard(20)
-            .await
-            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+    pub async fn get_leaderboard(
+        leaderboard_type: LeaderboardType,
+        time_boundaries: TimeBoundaries,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let leaderboard = match leaderboard_type {
+            LeaderboardType::Volume => db.query_leaderboard_volume(time_boundaries, 20).await,
+            LeaderboardType::Profit => db.query_leaderboard_profit(time_boundaries, 20).await,
+        }
+        .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::Leaderboard(
             leaderboard,

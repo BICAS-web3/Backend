@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT bet.player, bet.total, nickname.nickname from (\n                    SELECT \n                        bet.player,\n                        SUM((bet.profit/1000000000000000000)*price.price) as total\n                    FROM bet\n                    INNER JOIN (SELECT \n                                    token.name AS name,\n                                    token.contract_address AS address,\n                                    tokenprice.price AS price\n                                FROM token\n                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price\n                    ON bet.token_address = price.address\n                    GROUP BY bet.player) as bet\n                    LEFT JOIN nickname ON bet.player=nickname.address\n                    ORDER BY total DESC\n                LIMIT $1;\n                ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "player",
+        "type_info": "Bpchar"
+      },
+      {
+        "ordinal": 1,
+        "name": "total",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 2,
+        "name": "nickname",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      null,
+      false
+    ]
+  },
+  "hash": "619b6ce8cc42463157466bce84f0e15d6d3407ec09ddf46da61ec479d13e8bb7"
+}
