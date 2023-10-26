@@ -7,7 +7,7 @@ use utoipa::{
 use utoipa_swagger_ui::Config;
 
 use crate::handlers;
-use crate::models::{db_models, json_requests, json_responses};
+use crate::models::{db_models, json_requests, json_responses, LeaderboardType};
 
 use std::sync::Arc;
 use warp::{
@@ -41,7 +41,8 @@ use warp::{
             handlers::click_partner_subid,
             handlers::add_partner_subid,
             handlers::add_partner_site,
-            handlers::add_contacts
+            handlers::add_contacts,
+            handlers::get_leaderboard
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -83,6 +84,10 @@ use warp::{
             db_models::PartnerContact,
             db_models::SiteSubId,
             db_models::RefClicks,
+            db_models::Leaderboard,
+            db_models::TimeBoundaries,
+
+            LeaderboardType
 
         )),
         tags(

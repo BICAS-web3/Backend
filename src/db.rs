@@ -2,8 +2,8 @@ use crate::{
     config::DatabaseSettings,
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock, LatestGames,
-        NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite, Player,
-        PlayerTotals, RpcUrl, SiteSubId, Token, TokenPrice, Totals,
+        Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite,
+        Player, PlayerTotals, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
     },
 };
 
@@ -932,5 +932,237 @@ impl DB {
         .execute(&self.db_pool)
         .await
         .map(|_| ())
+    }
+
+    pub async fn query_leaderboard_volume(
+        &self,
+        time_boundaries: TimeBoundaries,
+        limit: i64,
+    ) -> Result<Vec<Leaderboard>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    WHERE bet.timestamp > now() - interval '1 day'
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    WHERE bet.timestamp > now() - interval '1 week'
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    WHERE bet.timestamp > now() - interval '1 month'
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    pub async fn query_leaderboard_profit(
+        &self,
+        time_boundaries: TimeBoundaries,
+        limit: i64,
+    ) -> Result<Vec<Leaderboard>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.profit/1000000000000000000)*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    WHERE bet.timestamp > now() - interval '1 day'
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.profit/1000000000000000000)*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    WHERE bet.timestamp > now() - interval '1 week'
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.profit/1000000000000000000)*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    WHERE bet.timestamp > now() - interval '1 month'
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    Leaderboard,
+                    r#"
+                SELECT bet.player, bet.total, nickname.nickname from (
+                    SELECT 
+                        bet.player,
+                        SUM((bet.profit/1000000000000000000)*price.price) as total
+                    FROM bet
+                    INNER JOIN (SELECT 
+                                    token.name AS name,
+                                    token.contract_address AS address,
+                                    tokenprice.price AS price
+                                FROM token
+                                INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+                    ON bet.token_address = price.address
+                    GROUP BY bet.player) as bet
+                    LEFT JOIN nickname ON bet.player=nickname.address
+                    ORDER BY total DESC
+                LIMIT $1;
+                "#,
+                    limit
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
     }
 }
