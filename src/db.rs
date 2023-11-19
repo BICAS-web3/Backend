@@ -96,7 +96,7 @@ impl DB {
             LatestGames,
             r#"
             SELECT game.name FROM game RIGHT JOIN 
-                (SELECT * from bet where bet.player=$1 LIMIT 2) as bets ON bets.game_id = game.id
+                (SELECT * from bet where bet.player=$1 ORDER BY timestamp DESC LIMIT 2) as bets ON bets.game_id = game.id
             "#,
             address
         )
