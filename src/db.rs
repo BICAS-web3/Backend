@@ -551,18 +551,20 @@ impl DB {
             r#"
             SELECT 
                     COUNT(bet.id) AS bets_amount,
-                    (SELECT 
-                        SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum
-                            from bet
-                            INNER JOIN (SELECT 
+                    COUNT(case when bet.wager*bet.bets > bet.profit then 1 else null end) as lost_bets,
+					COUNT(case when bet.wager*bet.bets <= bet.profit then 1 else null end) as won_bets,
+                    SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum,
+					SUM((bet.profit/1000000000000000000)*price.price) as gross_profit,
+					SUM((bet.profit/1000000000000000000)*price.price)-SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as net_profit,
+					MAX((bet.profit/1000000000000000000)*price.price) as highest_win
+            FROM bet 
+			INNER JOIN (SELECT 
                                 token.name AS name,
                                 token.contract_address AS address,
                                 tokenprice.price AS price
                         FROM token
                         INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
-                            ON bet.token_address = price.address
-                        WHERE bet.player=$1)
-            FROM bet WHERE bet.player=$1;
+              ON bet.token_address = price.address AND bet.player = $1
             "#,
             address
         )

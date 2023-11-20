@@ -7,7 +7,9 @@ use crate::config;
 use crate::db::DB;
 use crate::errors::ApiError;
 #[allow(unused_imports)]
-use crate::models::db_models::{GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player};
+use crate::models::db_models::{
+    GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals,
+};
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
@@ -373,6 +375,21 @@ pub mod player {
         Ok(gen_arbitrary_response(ResponseBody::Player(player)))
     }
 
+    /// Get user totals
+    ///
+    /// Gets user's statistics
+    #[utoipa::path(
+        tag="player",
+        get,
+        path = "/api/player/totals/{address}",
+        responses(
+            (status = 200, description = "User statistics", body = PlayerTotals),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("address" = String, Path, description = "User address")
+        ),
+    )]
     pub async fn get_player_totals(
         address: String,
         db: DB,
