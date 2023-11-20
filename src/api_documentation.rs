@@ -42,7 +42,8 @@ use warp::{
             handlers::add_partner_subid,
             handlers::add_partner_site,
             handlers::add_contacts,
-            handlers::get_leaderboard
+            handlers::get_leaderboard,
+            handlers::get_player_totals
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -86,6 +87,7 @@ use warp::{
             db_models::RefClicks,
             db_models::Leaderboard,
             db_models::TimeBoundaries,
+            db_models::PlayerTotals,
 
             LeaderboardType
 

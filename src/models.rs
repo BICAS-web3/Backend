@@ -137,7 +137,12 @@ pub mod db_models {
     #[derive(Deserialize, Serialize, ToSchema, Debug)]
     pub struct PlayerTotals {
         pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
         pub total_wagered_sum: Option<f64>,
+        pub gross_profit: Option<f64>,
+        pub net_profit: Option<f64>,
+        pub highest_win: Option<f64>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
