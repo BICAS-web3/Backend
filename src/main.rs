@@ -11,6 +11,7 @@ use tracing::{debug, error, info, warn};
 use tracing_subscriber::{fmt, prelude::__tracing_subscriber_SubscriberExt, EnvFilter};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::Config;
+use warp::hyper::header::HeaderName;
 use warp::Filter;
 
 mod api_documentation;
@@ -96,11 +97,22 @@ async fn main() {
         .and(warp::any().map(move || api_config.clone()))
         .and_then(serve_swagger);
 
+    let cors = warp::cors()
+        // .allow_origin("http://localhost:3000/")
+        .allow_any_origin()
+        .allow_methods(vec!["GET", "OPTIONS", "POST"])
+        .allow_headers([
+            HeaderName::from_static("authorization"),
+            HeaderName::from_static("content-type"),
+            HeaderName::from_static("access-control-allow-origin"),
+            HeaderName::from_static("accept"),
+        ]);
+
     info!("Server started, waiting for CTRL+C");
     tokio::select! {
         _ = warp::serve(
             filters::init_filters(db, ws_data_feed).or(api_doc)
-            .or(swagger_ui).recover(handle_rejection), //.with(cors),
+            .or(swagger_ui).recover(handle_rejection).with(cors),
         )
         .run((*config::SERVER_HOST, *config::SERVER_PORT)) => {},
         _ = signal::ctrl_c() => {
