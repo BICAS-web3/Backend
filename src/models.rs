@@ -366,6 +366,7 @@ pub mod json_responses {
         PlayerTotals(PlayerTotals),
         TokenPrice(TokenPrice),
         PartnerInfo(PartnerInfo),
+        PartnerContacts(Vec<PartnerContact>),
         Leaderboard(Vec<Leaderboard>),
     }
 

@@ -845,6 +845,32 @@ pub mod partner {
             },
         )))
     }
+
+    /// Gets partner contacts
+    ///
+    /// Gets all contacts of the user
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/contacts/get",
+        responses(
+            (status = 200, description = "Partner account was created", body = PartnerContact),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_partner_contacts(
+        wallet: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let contacts = db
+            .get_partner_contacts(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::PartnerContacts(
+            contacts,
+        )))
+    }
 }
 
 pub mod general {
