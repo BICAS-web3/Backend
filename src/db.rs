@@ -709,7 +709,7 @@ impl DB {
         wallet: &str,
         contact_ids: &[i64],
     ) -> Result<(), sqlx::Error> {
-        for contact_id in contact_ids.into_iter() {
+        for contact_id in contact_ids.iter() {
             sqlx::query!(
                 r#"
                 DELETE FROM partnercontact where id = $1 AND partner_id = $2

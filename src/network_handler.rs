@@ -239,42 +239,69 @@ pub async fn token_price_handler(
     usdt_token_address: String,
     router_address: String,
 ) {
+    let abi_file = File::open("./abis/pancake.json").unwrap();
+    let mut router_address_wrapped: [u8; 20] = [0; 20];
+    hex::decode_to_slice(router_address[2..].as_bytes(), &mut router_address_wrapped).unwrap();
+
+    let transport = rpc_urls
+        .iter()
+        .find_map(|url| web3::transports::Http::new(url).ok())
+        .unwrap();
+
+    debug!("Starting listening to rpc: {:?}", transport);
+
+    let web3 = web3::Web3::new(transport);
+
+    let contract = Contract::new(
+        web3.eth(),
+        H160::from_slice(&router_address_wrapped),
+        ethabi::Contract::load(abi_file).unwrap(),
+    );
+
+    let bnb_text_token = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
+    let mut bnb_address: [u8; 20] = [0; 20];
+    hex::decode_to_slice(bnb_text_token[2..].as_bytes(), &mut bnb_address).unwrap();
+    let bnb_address = H160::from(bnb_address);
+
+    let mut usdt_address: [u8; 20] = [0; 20];
+    hex::decode_to_slice(usdt_token_address[2..].as_bytes(), &mut usdt_address).unwrap();
+    let usdt_address = H160::from(usdt_address);
+
     loop {
-        let abi_file = File::open("./abis/pancake.json").unwrap();
-        let mut router_address_wrapped: [u8; 20] = [0; 20];
-        hex::decode_to_slice(router_address[2..].as_bytes(), &mut router_address_wrapped).unwrap();
+        let amount: Vec<U256> = match contract
+            .query(
+                "getAmountsOut",
+                (
+                    U256::from(1000000000000000000u64),
+                    vec![bnb_address, usdt_address],
+                ),
+                None,
+                Default::default(),
+                None,
+            )
+            .await
+        {
+            Ok(amount) => amount,
+            Err(e) => {
+                error!("Error on getting ammounts {:?}", e);
+                sleep(Duration::from_secs(180)).await;
+                continue;
+            }
+        };
 
-        let transport = rpc_urls
-            .iter()
-            .find_map(|url| web3::transports::Http::new(url).ok())
-            .unwrap();
+        let bnb_price = Decimal::from(amount[1].as_u128()) / Decimal::from(1000000000000000000u64);
+        for token in tokens.iter() {
+            let mut token_address: [u8; 20] = [0; 20];
+            hex::decode_to_slice(token.contract_address[2..].as_bytes(), &mut token_address)
+                .unwrap();
+            let token_address = H160::from(token_address);
 
-        debug!("Starting listening to rpc: {:?}", transport);
-
-        let web3 = web3::Web3::new(transport);
-
-        let contract = Contract::new(
-            web3.eth(),
-            H160::from_slice(&router_address_wrapped),
-            ethabi::Contract::load(abi_file).unwrap(),
-        );
-
-        let bnb_text_token = "0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c";
-        let mut bnb_address: [u8; 20] = [0; 20];
-        hex::decode_to_slice(bnb_text_token[2..].as_bytes(), &mut bnb_address).unwrap();
-        let bnb_address = H160::from(bnb_address);
-
-        let mut usdt_address: [u8; 20] = [0; 20];
-        hex::decode_to_slice(usdt_token_address[2..].as_bytes(), &mut usdt_address).unwrap();
-        let usdt_address = H160::from(usdt_address);
-
-        loop {
             let amount: Vec<U256> = match contract
                 .query(
                     "getAmountsOut",
                     (
                         U256::from(1000000000000000000u64),
-                        vec![bnb_address, usdt_address],
+                        vec![token_address, bnb_address],
                     ),
                     None,
                     Default::default(),
@@ -290,56 +317,26 @@ pub async fn token_price_handler(
                 }
             };
 
-            let bnb_price =
+            let token_price =
                 Decimal::from(amount[1].as_u128()) / Decimal::from(1000000000000000000u64);
-            for token in tokens.iter() {
-                let mut token_address: [u8; 20] = [0; 20];
-                hex::decode_to_slice(token.contract_address[2..].as_bytes(), &mut token_address)
-                    .unwrap();
-                let token_address = H160::from(token_address);
 
-                let amount: Vec<U256> = match contract
-                    .query(
-                        "getAmountsOut",
-                        (
-                            U256::from(1000000000000000000u64),
-                            vec![token_address, bnb_address],
-                        ),
-                        None,
-                        Default::default(),
-                        None,
-                    )
-                    .await
-                {
-                    Ok(amount) => amount,
-                    Err(e) => {
-                        error!("Error on getting ammounts {:?}", e);
-                        sleep(Duration::from_secs(180)).await;
-                        continue;
-                    }
-                };
+            let token_price = (token_price * bnb_price).to_f64().unwrap();
 
-                let token_price =
-                    Decimal::from(amount[1].as_u128()) / Decimal::from(1000000000000000000u64);
-
-                let token_price = (token_price * bnb_price).to_f64().unwrap();
-
-                if let Err(e) = db_sender.send(DbMessage::NewPrice(TokenPrice {
-                    id: 0,
-                    token_name: token.name.clone(),
-                    price: token_price,
-                })) {
-                    error!(
-                        "Error getting price for {:?}: {:?}",
-                        token.contract_address, e
-                    );
-                    continue;
-                }
-
-                debug!("{:?} price: {:?}", token.name, token_price);
+            if let Err(e) = db_sender.send(DbMessage::NewPrice(TokenPrice {
+                id: 0,
+                token_name: token.name.clone(),
+                price: token_price,
+            })) {
+                error!(
+                    "Error getting price for {:?}: {:?}",
+                    token.contract_address, e
+                );
+                continue;
             }
-            sleep(Duration::from_secs(180)).await;
+
+            debug!("{:?} price: {:?}", token.name, token_price);
         }
+        sleep(Duration::from_secs(180)).await;
     }
 }
 
