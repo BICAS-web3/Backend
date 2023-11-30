@@ -43,7 +43,10 @@ use warp::{
             handlers::add_partner_site,
             handlers::add_contacts,
             handlers::get_leaderboard,
-            handlers::get_player_totals
+            handlers::get_player_totals,
+            handlers::get_partner_contacts,
+            handlers::get_partner_sites,
+            handlers::delete_partner_contacts
         ),
         components(schemas(
             json_requests::SetNickname,

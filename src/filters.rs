@@ -151,6 +151,12 @@ fn json_body_add_partner_subid(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_delete_partner_contact(
+) -> impl Filter<Extract = (json_requests::DeletePartnerContacts,), Error = warp::Rejection> + Clone
+{
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 fn json_body_connect_wallet(
 ) -> impl Filter<Extract = (json_requests::ConnectWallet,), Error = warp::Rejection> + Clone {
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
@@ -463,6 +469,20 @@ pub fn add_partner_site(
         .and_then(handlers::add_partner_site)
 }
 
+pub fn get_partner_sites(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(with_db(db))
+        .and_then(handlers::get_partner_sites)
+}
+
 pub fn add_partner_subid(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -497,19 +517,54 @@ pub fn connect_wallet_subid(
         .and_then(handlers::connect_wallet)
 }
 
+pub fn get_partner_contacts(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("get")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(with_db(db))
+        .and_then(handlers::get_partner_contacts)
+}
+
+pub fn delete_partner_contacts(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("delete")
+        .and(warp::post())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(json_body_delete_partner_contact())
+        .and(with_db(db))
+        .and_then(handlers::delete_partner_contacts)
+}
+
 pub fn partners(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("partner").and(
         register_partner(db.clone())
             .or(get_partner(db.clone()))
-            .or(warp::path("contacts").and(add_partner_contacts(db.clone())))
+            .or(warp::path("contacts").and(
+                get_partner_contacts(db.clone())
+                    .or(add_partner_contacts(db.clone()))
+                    .or(delete_partner_contacts(db.clone())),
+            ))
             .or(warp::path("site").and(
-                add_partner_site(db.clone()).or(warp::path("subid").and(
-                    add_partner_subid(db.clone())
-                        .or(click_partner_subid(db.clone()))
-                        .or(connect_wallet_subid(db.clone())),
-                )),
+                add_partner_site(db.clone())
+                    .or(get_partner_sites(db.clone()))
+                    .or(warp::path("subid").and(
+                        add_partner_subid(db.clone())
+                            .or(click_partner_subid(db.clone()))
+                            .or(connect_wallet_subid(db.clone())),
+                    )),
             )),
     )
 }

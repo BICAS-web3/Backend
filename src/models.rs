@@ -366,6 +366,8 @@ pub mod json_responses {
         PlayerTotals(PlayerTotals),
         TokenPrice(TokenPrice),
         PartnerInfo(PartnerInfo),
+        PartnerContacts(Vec<PartnerContact>),
+        PartnerSiteInfo(Vec<PartnerSiteInfo>),
         Leaderboard(Vec<Leaderboard>),
     }
 
@@ -622,6 +624,11 @@ pub mod json_requests {
     #[derive(Deserialize, Serialize, ToSchema)]
     pub struct AddPartnerContacts {
         pub contacts: Vec<PartnerContactBasic>,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct DeletePartnerContacts {
+        pub contacts: Vec<i64>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

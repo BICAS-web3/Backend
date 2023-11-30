@@ -704,6 +704,26 @@ impl DB {
         Ok(())
     }
 
+    pub async fn delete_partner_contacts(
+        &self,
+        wallet: &str,
+        contact_ids: &[i64],
+    ) -> Result<(), sqlx::Error> {
+        for contact_id in contact_ids.iter() {
+            sqlx::query!(
+                r#"
+                DELETE FROM partnercontact where id = $1 AND partner_id = $2
+                "#,
+                contact_id,
+                wallet
+            )
+            .execute(&self.db_pool)
+            .await?;
+        }
+
+        Ok(())
+    }
+
     pub async fn get_partner_contacts(
         &self,
         wallet: &str,
