@@ -13,8 +13,8 @@ use crate::models::db_models::{
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
-    AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ConnectWallet, RegisterPartner,
-    SetNickname,
+    AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ConnectWallet, DeletePartnerContacts,
+    RegisterPartner, SetNickname,
 };
 #[allow(unused_imports)]
 use crate::models::json_responses::{
@@ -854,7 +854,7 @@ pub mod partner {
         get,
         path = "/api/partner/contacts/get",
         responses(
-            (status = 200, description = "Partner account was created", body = PartnerContact),
+            (status = 200, description = "Partner account was created", body = Vec<PartnerContact>),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
     )]
@@ -870,6 +870,67 @@ pub mod partner {
         Ok(gen_arbitrary_response(ResponseBody::PartnerContacts(
             contacts,
         )))
+    }
+
+    /// Gets partner sites
+    ///
+    /// Gets all sites of the user
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/site/get",
+        responses(
+            (status = 200, description = "Partner's site", body = Vec<PartnerSiteInfo>),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_partner_sites(
+        wallet: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let sites = db
+            .get_partner_sites(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        let mut sites_info: Vec<PartnerSiteInfo> = Vec::with_capacity(sites.len());
+        for site in sites {
+            let sub_ids = db
+                .get_site_subids(site.internal_id)
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            sites_info.push(PartnerSiteInfo {
+                basic: site,
+                sub_ids,
+            })
+        }
+
+        Ok(gen_arbitrary_response(ResponseBody::PartnerSiteInfo(
+            sites_info,
+        )))
+    }
+
+    /// Remove partner contacts
+    ///
+    /// Gets all contacts of the user
+    #[utoipa::path(
+        tag="partner",
+        delete,
+        path = "/api/partner/contacts/delete",
+        responses(
+            (status = 200, description = "Partner contact was removed", body = DeletePartnerContacts),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn delete_partner_contacts(
+        wallet: String,
+        contacts: json_requests::DeletePartnerContacts,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.delete_partner_contacts(&wallet, &contacts.contacts)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Contact was deleted"))
     }
 }
 
