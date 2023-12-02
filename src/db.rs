@@ -3,7 +3,8 @@ use crate::{
     models::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock, LatestGames,
         Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite,
-        Player, PlayerTotals, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
+        Player, PlayerTotals, RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice,
+        Totals,
     },
 };
 
@@ -853,27 +854,6 @@ impl DB {
         .await
     }
 
-    // pub async fn get_site_subid(
-    //     &self,
-    //     internal_site_id: i64,
-    //     subid: i64,
-    // ) -> Result<SiteSubId, sqlx::Error> {
-    //     sqlx::query_as_unchecked!(
-    //         SiteSubId,
-    //         r#"
-    //         SELECT *
-    //         FROM SiteSubId
-    //         WHERE site_id=$1
-    //             AND id=$2
-    //         LIMIT 1
-    //         "#,
-    //         internal_site_id,
-    //         subid
-    //     )
-    //     .fetch_one(&self.db_pool)
-    //     .await
-    // }
-
     pub async fn get_subid(
         &self,
         wallet: &str,
@@ -895,6 +875,36 @@ impl DB {
             WHERE partnersite.partner_id=$1 AND partnersite.id=$2 AND sitesubid.id=$3
             "#,
             wallet,
+            site_id,
+            sub_id
+        ).fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_subid_clicks(
+        &self,
+        partner: &str,
+        site_id: i64,
+        sub_id: i64,
+    ) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+            SELECT 
+                refclicks.id,
+                refclicks.clicks,
+                refclicks.sub_id_internal,
+                refclicks.partner_id
+            FROM refclicks
+            INNER JOIN (SELECT 
+                sitesubid.internal_id
+            FROM partnersite 
+            INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id
+            WHERE partnersite.partner_id=$1 
+                        AND partnersite.id=$2 
+                        AND sitesubid.id=$3) AS subids ON subids.internal_id=refclicks.sub_id_internal;
+            "#,
+            partner,
             site_id,
             sub_id
         ).fetch_one(&self.db_pool)

@@ -506,6 +506,22 @@ pub fn click_partner_subid(
         .and_then(handlers::click_partner_subid)
 }
 
+pub fn subid_get_clicks(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("clicks")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(warp::path::param::<i64>())
+        .and(warp::path::param::<i64>())
+        .and(with_db(db))
+        .and_then(handlers::get_clicks)
+}
+
 pub fn connect_wallet_subid(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -563,7 +579,8 @@ pub fn partners(
                     .or(warp::path("subid").and(
                         add_partner_subid(db.clone())
                             .or(click_partner_subid(db.clone()))
-                            .or(connect_wallet_subid(db.clone())),
+                            .or(connect_wallet_subid(db.clone()))
+                            .or(subid_get_clicks(db.clone())),
                     )),
             )),
     )

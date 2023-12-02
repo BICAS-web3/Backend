@@ -115,8 +115,6 @@ pub mod db_models {
     pub struct RefClicks {
         pub id: i64,
         pub clicks: i64,
-
-        //pub sub_id: i64,
         pub sub_id_internal: i64,
         pub partner_id: String,
     }
@@ -317,7 +315,8 @@ pub mod json_responses {
 
     use super::db_models::{
         Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard, NetworkInfo, Nickname, Partner,
-        PartnerContact, PartnerSite, Player, PlayerTotals, RpcUrl, SiteSubId, Token, Totals,
+        PartnerContact, PartnerSite, Player, PlayerTotals, RefClicks, RpcUrl, SiteSubId, Token,
+        Totals,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -369,6 +368,7 @@ pub mod json_responses {
         PartnerContacts(Vec<PartnerContact>),
         PartnerSiteInfo(Vec<PartnerSiteInfo>),
         Leaderboard(Vec<Leaderboard>),
+        Clicks(RefClicks),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
