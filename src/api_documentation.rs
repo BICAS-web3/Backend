@@ -46,7 +46,8 @@ use warp::{
             handlers::get_player_totals,
             handlers::get_partner_contacts,
             handlers::get_partner_sites,
-            handlers::delete_partner_contacts
+            handlers::delete_partner_contacts,
+            handlers::get_clicks
         ),
         components(schemas(
             json_requests::SetNickname,
