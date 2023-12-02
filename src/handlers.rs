@@ -8,7 +8,7 @@ use crate::db::DB;
 use crate::errors::ApiError;
 #[allow(unused_imports)]
 use crate::models::db_models::{
-    GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals,
+    GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals, RefClicks,
 };
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
@@ -854,7 +854,7 @@ pub mod partner {
         get,
         path = "/api/partner/contacts/get",
         responses(
-            (status = 200, description = "Partner account was created", body = Vec<PartnerContact>),
+            (status = 200, description = "Partner account was created", body = PartnerContact),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
     )]
@@ -880,7 +880,7 @@ pub mod partner {
         get,
         path = "/api/partner/site/get",
         responses(
-            (status = 200, description = "Partner's site", body = Vec<PartnerSiteInfo>),
+            (status = 200, description = "Partner's site", body = PartnerSiteInfo),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
     )]
@@ -931,6 +931,36 @@ pub mod partner {
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_info_response("Contact was deleted"))
+    }
+
+    /// Gets clicks for the subid
+    ///
+    /// Gets all the clicks accumulated for subid
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/site/subid/clicks/{site_id}/{sub_id}",
+        responses(
+            (status = 200, description = "Partner's subid clicks", body = RefClicks),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("site_id" = i64, Path, description = "Relative id of the site, registered on partner's account"),
+            ("sub_id" = i64, Path, description = "Relative subid ofthe site, registered on partner's account"),
+        ),
+    )]
+    pub async fn get_clicks(
+        wallet: String,
+        site_id: i64,
+        sub_id: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let clicks = db
+            .get_subid_clicks(&wallet, site_id, sub_id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
     }
 }
 

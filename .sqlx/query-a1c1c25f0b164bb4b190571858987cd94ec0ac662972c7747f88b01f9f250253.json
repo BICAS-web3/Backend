@@ -1,0 +1,42 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                refclicks.id,\n                refclicks.clicks,\n                refclicks.sub_id_internal,\n                refclicks.partner_id\n            FROM refclicks\n            INNER JOIN (SELECT \n                sitesubid.internal_id\n            FROM partnersite \n            INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id\n            WHERE partnersite.partner_id=$1 \n                        AND partnersite.id=$2 \n                        AND sitesubid.id=$3) AS subids ON subids.internal_id=refclicks.sub_id_internal;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "clicks",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "sub_id_internal",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "partner_id",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "a1c1c25f0b164bb4b190571858987cd94ec0ac662972c7747f88b01f9f250253"
+}
