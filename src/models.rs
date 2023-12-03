@@ -84,6 +84,11 @@ pub mod db_models {
         pub is_verified: bool,
     }
 
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct AmountConnectedWallets {
+        pub connected_wallets: i64,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct PartnerSite {
         pub internal_id: i64,
@@ -314,9 +319,9 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard, NetworkInfo, Nickname, Partner,
-        PartnerContact, PartnerSite, Player, PlayerTotals, RefClicks, RpcUrl, SiteSubId, Token,
-        Totals,
+        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
+        NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player, PlayerTotals,
+        RefClicks, RpcUrl, SiteSubId, Token, Totals,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -369,6 +374,7 @@ pub mod json_responses {
         PartnerSiteInfo(Vec<PartnerSiteInfo>),
         Leaderboard(Vec<Leaderboard>),
         Clicks(RefClicks),
+        AmountConnectedWallets(AmountConnectedWallets),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
