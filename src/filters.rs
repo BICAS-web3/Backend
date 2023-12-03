@@ -541,7 +541,7 @@ pub fn site_get_clicks(
 pub fn partner_get_clicks(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("clicks")
+    warp::path!("clicks")
         .and(warp::get())
         //.and(json_body_register_partner())
         .and(warp::header::<String>("auth"))
