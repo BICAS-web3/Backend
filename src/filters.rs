@@ -509,7 +509,7 @@ pub fn click_partner_subid(
 pub fn subid_get_clicks(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("clicks")
+    warp::path("clicks")
         .and(warp::get())
         //.and(json_body_register_partner())
         .and(warp::header::<String>("auth"))
@@ -518,6 +518,7 @@ pub fn subid_get_clicks(
         .and_then(with_auth_partner)
         .and(warp::path::param::<i64>())
         .and(warp::path::param::<i64>())
+        .and(warp::path::end())
         .and(with_db(db))
         .and_then(handlers::get_clicks)
 }
