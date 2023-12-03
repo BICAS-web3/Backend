@@ -990,6 +990,30 @@ pub mod partner {
 
         Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
     }
+
+    /// Gets clicks for the partner
+    ///
+    /// Gets all the clicks accumulated for partner
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/clicks",
+        responses(
+            (status = 200, description = "Partner's site clicks", body = RefClicks),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_partner_clicks(
+        wallet: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let clicks = db
+            .get_partner_clicks(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
+    }
 }
 
 pub mod general {
