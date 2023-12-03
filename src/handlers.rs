@@ -608,6 +608,7 @@ pub mod abi {
 
 pub mod partner {
 
+    use crate::models::db_models::TimeBoundaries;
     use crate::models::json_responses::{PartnerInfo, PartnerSiteInfo};
 
     use super::*;
@@ -870,6 +871,36 @@ pub mod partner {
         Ok(gen_arbitrary_response(ResponseBody::PartnerContacts(
             contacts,
         )))
+    }
+
+    /// Gets amount of connected wallets
+    ///
+    /// Gets amount of wallets that connected to the partner
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/connected/{time_boundaries}",
+        responses(
+            (status = 200, description = "Connected wallets", body = PartnerContact),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch connected wallets"),
+        ),
+    )]
+    pub async fn get_partner_connected_wallets(
+        wallet: String,
+        _time_boundaries: TimeBoundaries,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let connected_wallets = db
+            .get_partner_connected_wallets_amount(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(
+            ResponseBody::AmountConnectedWallets(connected_wallets),
+        ))
     }
 
     /// Gets partner sites

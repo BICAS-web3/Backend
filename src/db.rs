@@ -1,10 +1,10 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock, LatestGames,
-        Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram, PartnerSite,
-        Player, PlayerTotals, RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice,
-        Totals,
+        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock,
+        LatestGames, Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram,
+        PartnerSite, Player, PlayerTotals, RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token,
+        TokenPrice, Totals,
     },
 };
 
@@ -952,6 +952,21 @@ impl DB {
                     INNER JOIN sitesubid ON sitesubid.internal_id=refclicks.sub_id_internal
                     WHERE refclicks.partner_id=$1) as clicks
             ON partnersite.internal_id=clicks.site_id;
+            "#,
+            partner
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_connected_wallets_amount(
+        &self,
+        partner: &str,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            AmountConnectedWallets,
+            r#"
+            SELECT COUNT(connectedwallets.address) as connected_wallets FROM connectedwallets WHERE partner_id=$1
             "#,
             partner
         )

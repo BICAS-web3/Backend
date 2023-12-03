@@ -49,7 +49,8 @@ use warp::{
             handlers::delete_partner_contacts,
             handlers::get_clicks,
             handlers::get_site_clicks,
-            handlers::get_partner_clicks
+            handlers::get_partner_clicks,
+            handlers::get_partner_connected_wallets
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -94,6 +95,7 @@ use warp::{
             db_models::Leaderboard,
             db_models::TimeBoundaries,
             db_models::PlayerTotals,
+            db_models::AmountConnectedWallets,
 
             LeaderboardType
 
