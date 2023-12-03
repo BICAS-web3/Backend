@@ -911,6 +911,54 @@ impl DB {
         .await
     }
 
+    pub async fn get_site_clicks(
+        &self,
+        partner: &str,
+        site_id: i64,
+    ) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+            SELECT 
+                0 AS id,
+                SUM(clicks.clicks) AS clicks,
+                0 AS sub_id_internal,
+                $1 AS partner_id
+            FROM partnersite
+            INNER JOIN (SELECT * FROM refclicks
+                    INNER JOIN sitesubid ON sitesubid.internal_id=refclicks.sub_id_internal
+                    WHERE refclicks.partner_id=$1) as clicks
+            ON partnersite.internal_id=clicks.site_id
+            WHERE partnersite.id = $2;
+            "#,
+            partner,
+            site_id
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_clicks(&self, partner: &str) -> Result<RefClicks, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            RefClicks,
+            r#"
+            SELECT 
+                0 AS id,
+                SUM(clicks.clicks) AS clicks,
+                0 AS sub_id_internal,
+                $1 AS partner_id
+            FROM partnersite
+            INNER JOIN (SELECT * FROM refclicks
+                    INNER JOIN sitesubid ON sitesubid.internal_id=refclicks.sub_id_internal
+                    WHERE refclicks.partner_id=$1) as clicks
+            ON partnersite.internal_id=clicks.site_id;
+            "#,
+            partner
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
     pub async fn add_click(&self, partner: &str, sub_id: i64) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
