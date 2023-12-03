@@ -541,7 +541,7 @@ pub fn site_get_clicks(
 pub fn partner_get_clicks(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("clicks")
+    warp::path("clicks")
         .and(warp::get())
         //.and(json_body_register_partner())
         .and(warp::header::<String>("auth"))
@@ -595,7 +595,7 @@ pub fn delete_partner_contacts(
 pub fn get_partner_connected_wallets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("connected")
+    warp::path("connected")
         .and(warp::get())
         //.and(json_body_register_partner())
         .and(warp::header::<String>("auth"))
@@ -603,6 +603,7 @@ pub fn get_partner_connected_wallets(
         .and(warp::header::<String>("wallet"))
         .and_then(with_auth_partner)
         .and(warp::path::param::<TimeBoundaries>())
+        .and(warp::path::end())
         .and(with_db(db))
         .and_then(handlers::get_partner_connected_wallets)
 }
