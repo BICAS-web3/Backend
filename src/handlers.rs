@@ -962,6 +962,34 @@ pub mod partner {
 
         Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
     }
+
+    /// Gets clicks for the site
+    ///
+    /// Gets all the clicks accumulated for site
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/site/clicks/{site_id}",
+        responses(
+            (status = 200, description = "Partner's site clicks", body = RefClicks),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("site_id" = i64, Path, description = "Relative id of the site, registered on partner's account"),
+        ),
+    )]
+    pub async fn get_site_clicks(
+        wallet: String,
+        site_id: i64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let clicks = db
+            .get_site_clicks(&wallet, site_id)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
+    }
 }
 
 pub mod general {

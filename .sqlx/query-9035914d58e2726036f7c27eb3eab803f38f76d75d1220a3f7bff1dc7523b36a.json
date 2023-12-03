@@ -1,0 +1,41 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                0 AS id,\n                SUM(clicks.clicks) AS clicks,\n                0 AS sub_id_internal,\n                $1 AS partner_id\n            FROM partnersite\n            INNER JOIN (SELECT * FROM refclicks\n                    INNER JOIN sitesubid ON sitesubid.internal_id=refclicks.sub_id_internal\n                    WHERE refclicks.partner_id=$1) as clicks\n            ON partnersite.internal_id=clicks.site_id\n            WHERE partnersite.id = $2;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "clicks",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 2,
+        "name": "sub_id_internal",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 3,
+        "name": "partner_id",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "9035914d58e2726036f7c27eb3eab803f38f76d75d1220a3f7bff1dc7523b36a"
+}
