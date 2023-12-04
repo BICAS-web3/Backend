@@ -921,7 +921,7 @@ impl DB {
             r#"
             SELECT 
                 0 AS id,
-                SUM(clicks.clicks) AS clicks,
+                COALESCE(SUM(clicks.clicks), 0) AS clicks,
                 0 AS sub_id_internal,
                 $1 AS partner_id
             FROM partnersite
@@ -944,7 +944,7 @@ impl DB {
             r#"
             SELECT 
                 0 AS id,
-                SUM(clicks.clicks) AS clicks,
+                COALESCE(SUM(clicks.clicks), 0) AS clicks,
                 0 AS sub_id_internal,
                 $1 AS partner_id
             FROM partnersite
