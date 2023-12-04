@@ -920,9 +920,9 @@ impl DB {
             RefClicks,
             r#"
             SELECT 
-                0 AS id,
-                COALESCE(SUM(clicks.clicks), 0) AS clicks,
-                0 AS sub_id_internal,
+                CAST(0 as bigint) AS id,
+                CAST(COALESCE(SUM(clicks.clicks), 0) as BIGINT) AS clicks,
+                CAST(0 as bigint) AS sub_id_internal,
                 $1 AS partner_id
             FROM partnersite
             INNER JOIN (SELECT * FROM refclicks
@@ -959,19 +959,91 @@ impl DB {
         .await
     }
 
-    pub async fn get_partner_connected_wallets_amount(
+    pub async fn get_partner_connected_wallets_amount_exact_date(
         &self,
         partner: &str,
+        start: chrono::DateTime<chrono::Utc>,
+        end: chrono::DateTime<chrono::Utc>,
     ) -> Result<AmountConnectedWallets, sqlx::Error> {
         sqlx::query_as_unchecked!(
             AmountConnectedWallets,
             r#"
-            SELECT COUNT(connectedwallets.address) as connected_wallets FROM connectedwallets WHERE partner_id=$1
+                SELECT CAST(COUNT(connectedwallets.address) as BIGINT) as connected_wallets 
+                FROM connectedwallets 
+                WHERE partner_id=$1 AND
+                    connectedwallets.timestamp >= $2 AND
+                    connectedwallets.timestamp <= $3
             "#,
-            partner
+            partner,
+            start,
+            end
         )
         .fetch_one(&self.db_pool)
         .await
+    }
+
+    pub async fn get_partner_connected_wallets_amount(
+        &self,
+        partner: &str,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets 
+                        WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 day'
+                    "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                SELECT CAST(COUNT(connectedwallets.address) as BIGINT) as connected_wallets 
+                FROM connectedwallets 
+                WHERE partner_id=$1 AND
+                    connectedwallets.timestamp > now() - interval '1 week'
+            "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets 
+                        WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 month'
+                    "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                        SELECT CAST(COUNT(connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets 
+                        WHERE partner_id=$1
+                    "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+        }
     }
 
     pub async fn add_click(&self, partner: &str, sub_id: i64) -> Result<(), sqlx::Error> {

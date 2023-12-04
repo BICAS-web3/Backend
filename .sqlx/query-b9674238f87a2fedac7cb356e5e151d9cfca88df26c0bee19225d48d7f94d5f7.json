@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT CAST(COUNT(connectedwallets.address) as BIGINT) as connected_wallets \n                FROM connectedwallets \n                WHERE partner_id=$1 AND\n                    connectedwallets.timestamp >= $2 AND\n                    connectedwallets.timestamp <= $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connected_wallets",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "b9674238f87a2fedac7cb356e5e151d9cfca88df26c0bee19225d48d7f94d5f7"
+}
