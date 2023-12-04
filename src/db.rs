@@ -943,9 +943,9 @@ impl DB {
             RefClicks,
             r#"
             SELECT 
-                0 AS id,
-                COALESCE(SUM(clicks.clicks), 0) AS clicks,
-                0 AS sub_id_internal,
+                CAST(0 as bigint) AS id,
+                CAST(COALESCE(SUM(clicks.clicks), 0) as BIGINT) AS clicks,
+                CAST(0 as bigint) AS sub_id_internal,
                 $1 AS partner_id
             FROM partnersite
             INNER JOIN (SELECT * FROM refclicks
