@@ -50,7 +50,8 @@ use warp::{
             handlers::get_clicks,
             handlers::get_site_clicks,
             handlers::get_partner_clicks,
-            handlers::get_partner_connected_wallets
+            handlers::get_partner_connected_wallets,
+            handlers::get_partner_connected_wallets_exact_date
         ),
         components(schemas(
             json_requests::SetNickname,

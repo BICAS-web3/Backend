@@ -610,6 +610,7 @@ pub mod partner {
 
     use crate::models::db_models::TimeBoundaries;
     use crate::models::json_responses::{PartnerInfo, PartnerSiteInfo};
+    use chrono::{TimeZone, Utc};
 
     use super::*;
 
@@ -890,11 +891,48 @@ pub mod partner {
     )]
     pub async fn get_partner_connected_wallets(
         wallet: String,
-        _time_boundaries: TimeBoundaries,
+        time_boundaries: TimeBoundaries,
         db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
         let connected_wallets = db
-            .get_partner_connected_wallets_amount(&wallet)
+            .get_partner_connected_wallets_amount(&wallet, time_boundaries)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(
+            ResponseBody::AmountConnectedWallets(connected_wallets),
+        ))
+    }
+
+    /// Gets amount of connected wallets
+    ///
+    /// Gets amount of wallets that connected to the partner, withing specified time boundaries
+    /// time boundaries are specified as UNIX timestamps un UTC
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/connected/{start}/{end}",
+        responses(
+            (status = 200, description = "Connected wallets", body = PartnerContact),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("start" = u64, Path, description = "Starting timestamp for the search"),
+            ("end" = u64, Path, description = "Ending timestamp for the search"),
+        ),
+    )]
+    pub async fn get_partner_connected_wallets_exact_date(
+        wallet: String,
+        begin: u64,
+        end: u64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let connected_wallets = db
+            .get_partner_connected_wallets_amount_exact_date(
+                &wallet,
+                Utc.timestamp_opt(begin as i64, 0).unwrap(),
+                Utc.timestamp_opt(end as i64, 0).unwrap(),
+            )
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
