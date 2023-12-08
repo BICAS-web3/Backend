@@ -882,7 +882,7 @@ pub mod partner {
         get,
         path = "/api/partner/connected/{time_boundaries}",
         responses(
-            (status = 200, description = "Connected wallets", body = PartnerContact),
+            (status = 200, description = "Connected wallets", body = AmountConnectedWallets),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(
@@ -904,6 +904,36 @@ pub mod partner {
         ))
     }
 
+    /// Gets amount of connected wallets that made deposits
+    ///
+    /// Gets amount of wallets that connected to the partner and made at least one bet
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/connected/betted/{time_boundaries}",
+        responses(
+            (status = 200, description = "Connected wallets", body = AmountConnectedWallets),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch connected wallets"),
+        ),
+    )]
+    pub async fn get_partner_connected_wallets_with_deposits_amount(
+        wallet: String,
+        time_boundaries: TimeBoundaries,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let connected_wallets = db
+            .get_partner_connected_wallets_with_deposits_amount(&wallet, time_boundaries)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(
+            ResponseBody::AmountConnectedWallets(connected_wallets),
+        ))
+    }
+
     /// Gets amount of connected wallets
     ///
     /// Gets amount of wallets that connected to the partner, withing specified time boundaries
@@ -913,7 +943,7 @@ pub mod partner {
         get,
         path = "/api/partner/connected/{start}/{end}",
         responses(
-            (status = 200, description = "Connected wallets", body = PartnerContact),
+            (status = 200, description = "Connected wallets", body = AmountConnectedWallets),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(

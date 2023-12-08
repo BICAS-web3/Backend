@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT CAST(COUNT(DISTINCT connectedwallets.address) as BIGINT) as connected_wallets \n                        FROM connectedwallets\n                        INNER JOIN bet ON bet.player = connectedwallets.address\n                    WHERE partner_id=$1 AND\n                            connectedwallets.timestamp > now() - interval '1 day'\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "connected_wallets",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "17f61355914c33bdd509edb6f803d888191f54138eefd375bffe5a868e27f716"
+}
