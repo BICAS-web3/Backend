@@ -593,6 +593,23 @@ pub fn delete_partner_contacts(
         .and_then(handlers::delete_partner_contacts)
 }
 
+pub fn get_partner_connected_wallets_with_deposits_amount(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("connected")
+        .and(warp::path("betted").and(warp::path::end()))
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and_then(with_auth_partner)
+        .and(warp::path::param::<TimeBoundaries>())
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_partner_connected_wallets_with_deposits_amount)
+}
+
 pub fn get_partner_connected_wallets(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -633,6 +650,9 @@ pub fn partners(
         register_partner(db.clone())
             .or(get_partner_connected_wallets(db.clone()))
             .or(get_partner_connected_wallets_exact_date(db.clone()))
+            .or(get_partner_connected_wallets_with_deposits_amount(
+                db.clone(),
+            ))
             .or(partner_get_clicks(db.clone()))
             .or(get_partner(db.clone()))
             .or(warp::path("contacts").and(

@@ -982,6 +982,74 @@ impl DB {
         .await
     }
 
+    pub async fn get_partner_connected_wallets_with_deposits_amount(
+        &self,
+        partner: &str,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets
+                        INNER JOIN bet ON bet.player = connectedwallets.address
+                    WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 day'
+                    "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets
+                        INNER JOIN bet ON bet.player = connectedwallets.address
+                    WHERE partner_id=$1 AND
+                    connectedwallets.timestamp > now() - interval '1 week'
+                "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets
+                        INNER JOIN bet ON bet.player = connectedwallets.address
+                    WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 month'
+                    "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    AmountConnectedWallets,
+                    r#"
+                    SELECT CAST(COUNT(DISTINCT connectedwallets.address) as BIGINT) as connected_wallets 
+                        FROM connectedwallets
+                        INNER JOIN bet ON bet.player = connectedwallets.address
+                    WHERE partner_id=$1
+                    "#,
+                    partner
+                )
+                .fetch_one(&self.db_pool)
+                .await
+            }
+        }
+    }
+
     pub async fn get_partner_connected_wallets_amount(
         &self,
         partner: &str,
