@@ -982,6 +982,103 @@ impl DB {
         .await
     }
 
+    // pub async fn get_site_connected_wallets_info(
+    //     &self,
+    //     partner: &str,
+    //     site_id: i64,
+    //     time_boundaries: TimeBoundaries,
+    // ) -> Result<Vec<ConnectedWallet>, sqlx::Error> {
+    //     match time_boundaries {
+    //         TimeBoundaries::Daily => {
+    //             sqlx::query_as_unchecked!(
+    //                 ConnectedWallet,
+    //                 r#"
+    //                 SELECT
+    //                     connectedwallets.id,
+    //                     connectedwallets.address,
+    //                     connectedwallets.timestamp,
+    //                     partnersite.id as site_id,
+    //                     sitesubid.id as sub_id
+    //                 FROM connectedwallets
+    //                 INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+    //                 INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+    //                 WHERE connectedwallets.partner_id=$1
+    //                 AND connectedwallets.timestamp > now() - interval '1 day'
+    //                 "#,
+    //                 partner,
+    //                 sub_id_internal
+    //             )
+    //             .fetch_all(&self.db_pool)
+    //             .await
+    //         }
+    //         TimeBoundaries::Weekly => {
+    //             sqlx::query_as_unchecked!(
+    //                 ConnectedWallet,
+    //                 r#"
+    //                 SELECT
+    //                     connectedwallets.id,
+    //                     connectedwallets.address,
+    //                     connectedwallets.timestamp,
+    //                     partnersite.id as site_id,
+    //                     sitesubid.id as sub_id
+    //                 FROM connectedwallets
+    //                 INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+    //                 INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+    //                 WHERE connectedwallets.partner_id=$1
+    //                         AND connectedwallets.timestamp > now() - interval '1 week'
+    //                 "#,
+    //                 partner,
+    //                 sub_id_internal
+    //             )
+    //             .fetch_all(&self.db_pool)
+    //             .await
+    //         }
+    //         TimeBoundaries::Monthly => {
+    //             sqlx::query_as_unchecked!(
+    //                 ConnectedWallet,
+    //                 r#"
+    //                 SELECT
+    //                     connectedwallets.id,
+    //                     connectedwallets.address,
+    //                     connectedwallets.timestamp,
+    //                     partnersite.id as site_id,
+    //                     sitesubid.id as sub_id
+    //                 FROM connectedwallets
+    //                 INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+    //                 INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+    //                 WHERE connectedwallets.partner_id=$1
+    //                         AND connectedwallets.timestamp > now() - interval '1 month'
+    //                 "#,
+    //                 partner,
+    //                 sub_id_internal
+    //             )
+    //             .fetch_all(&self.db_pool)
+    //             .await
+    //         }
+    //         TimeBoundaries::All => {
+    //             sqlx::query_as_unchecked!(
+    //                 ConnectedWallet,
+    //                 r#"
+    //                 SELECT
+    //                     connectedwallets.id,
+    //                     connectedwallets.address,
+    //                     connectedwallets.timestamp,
+    //                     partnersite.id as site_id,
+    //                     sitesubid.id as sub_id
+    //                 FROM connectedwallets
+    //                 INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+    //                 INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+    //                 WHERE connectedwallets.partner_id=$1
+    //                 "#,
+    //                 partner,
+    //                 sub_id_internal
+    //             )
+    //             .fetch_all(&self.db_pool)
+    //             .await
+    //         }
+    //     }
+    // }
+
     pub async fn get_partner_connected_wallets_info(
         &self,
         partner: &str,
@@ -992,8 +1089,16 @@ impl DB {
                 sqlx::query_as_unchecked!(
                     ConnectedWallet,
                     r#"
-                    SELECT * FROM connectedwallets
-                    WHERE partner_id=$1 AND
+                    SELECT 
+                        connectedwallets.id,
+                        connectedwallets.address,
+                        connectedwallets.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedwallets
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedwallets.partner_id=$1 AND
                             connectedwallets.timestamp > now() - interval '1 day'
                     "#,
                     partner
@@ -1005,8 +1110,16 @@ impl DB {
                 sqlx::query_as_unchecked!(
                     ConnectedWallet,
                     r#"
-                    SELECT * FROM connectedwallets
-                    WHERE partner_id=$1 AND
+                    SELECT 
+                        connectedwallets.id,
+                        connectedwallets.address,
+                        connectedwallets.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedwallets
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedwallets.partner_id=$1 AND
                             connectedwallets.timestamp > now() - interval '1 week'
                     "#,
                     partner
@@ -1018,8 +1131,16 @@ impl DB {
                 sqlx::query_as_unchecked!(
                     ConnectedWallet,
                     r#"
-                    SELECT * FROM connectedwallets
-                    WHERE partner_id=$1 AND
+                    SELECT 
+                        connectedwallets.id,
+                        connectedwallets.address,
+                        connectedwallets.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedwallets
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedwallets.partner_id=$1 AND
                             connectedwallets.timestamp > now() - interval '1 month'
                     "#,
                     partner
@@ -1031,8 +1152,16 @@ impl DB {
                 sqlx::query_as_unchecked!(
                     ConnectedWallet,
                     r#"
-                    SELECT * FROM connectedwallets
-                    WHERE partner_id=$1
+                    SELECT 
+                        connectedwallets.id,
+                        connectedwallets.address,
+                        connectedwallets.timestamp,
+                        partnersite.id as site_id,
+                        sitesubid.id as sub_id
+                    FROM connectedwallets
+                    INNER JOIN sitesubid ON sitesubid.internal_id=connectedwallets.sub_id_internal
+                    INNER JOIN partnersite ON sitesubid.site_id=partnersite.internal_id
+                    WHERE connectedwallets.partner_id=$1
                     "#,
                     partner
                 )

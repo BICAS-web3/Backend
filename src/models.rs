@@ -95,8 +95,8 @@ pub mod db_models {
         pub address: String,
         #[serde(with = "ts_seconds")]
         pub timestamp: DateTime<Utc>,
-        pub sub_id_internal: i64,
-        pub partner_id: String,
+        pub site_id: i64,
+        pub sub_id: i64,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
