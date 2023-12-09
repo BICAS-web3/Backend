@@ -101,6 +101,7 @@ async fn with_auth_partner<'a>(
     signature: String,
     timestamp: u64,
     wallet: String,
+    db: DB,
 ) -> Result<String, warp::Rejection> {
     let time = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -111,6 +112,13 @@ async fn with_auth_partner<'a>(
     }
     let msg = format!("PARTNER AUTH {} {}", &wallet, timestamp);
     if tools::verify_signature(&wallet, &msg, &signature) {
+        if !db
+            .partner_exists(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?
+        {
+            return Err(reject::custom(ApiError::NotRegistered(wallet)));
+        }
         Ok(wallet)
     } else {
         Err(reject::custom(ApiError::BadSignature(
@@ -435,6 +443,7 @@ pub fn get_partner(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(with_db(db))
         .and_then(handlers::get_partner)
@@ -449,6 +458,7 @@ pub fn add_partner_contacts(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(json_body_add_partner_contacts())
         .and(with_db(db))
@@ -463,6 +473,7 @@ pub fn add_partner_site(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(json_body_add_partner_site())
         .and(with_db(db))
@@ -478,6 +489,7 @@ pub fn get_partner_sites(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(with_db(db))
         .and_then(handlers::get_partner_sites)
@@ -491,6 +503,7 @@ pub fn add_partner_subid(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(json_body_add_partner_subid())
         .and(with_db(db))
@@ -515,6 +528,7 @@ pub fn subid_get_clicks(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(warp::path::param::<i64>())
         .and(warp::path::param::<i64>())
@@ -532,6 +546,7 @@ pub fn site_get_clicks(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(warp::path::param::<i64>())
         .and(warp::path::end())
@@ -548,6 +563,7 @@ pub fn partner_get_clicks(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(with_db(db))
         .and_then(handlers::get_partner_clicks)
@@ -573,6 +589,7 @@ pub fn get_partner_contacts(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(with_db(db))
         .and_then(handlers::get_partner_contacts)
@@ -587,6 +604,7 @@ pub fn delete_partner_contacts(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(json_body_delete_partner_contact())
         .and(with_db(db))
@@ -596,13 +614,13 @@ pub fn delete_partner_contacts(
 pub fn get_partner_connected_wallets_with_deposits_amount(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("connected")
-        .and(warp::path("betted").and(warp::path::end()))
+    warp::path("connected_betted")
         .and(warp::get())
         //.and(json_body_register_partner())
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(warp::path::param::<TimeBoundaries>())
         .and(warp::path::end())
@@ -619,6 +637,7 @@ pub fn get_partner_connected_wallets(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(warp::path::param::<TimeBoundaries>())
         .and(warp::path::end())
@@ -635,6 +654,7 @@ pub fn get_partner_connected_wallets_exact_date(
         .and(warp::header::<String>("auth"))
         .and(warp::header::<u64>("timestamp"))
         .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
         .and_then(with_auth_partner)
         .and(warp::path::param::<u64>())
         .and(warp::path::param::<u64>())
@@ -643,11 +663,29 @@ pub fn get_partner_connected_wallets_exact_date(
         .and_then(handlers::get_partner_connected_wallets_exact_date)
 }
 
+pub fn get_partner_connected_wallets_info(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("wallets")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(warp::header::<String>("auth"))
+        .and(warp::header::<u64>("timestamp"))
+        .and(warp::header::<String>("wallet"))
+        .and(with_db(db.clone()))
+        .and_then(with_auth_partner)
+        .and(warp::path::param::<TimeBoundaries>())
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_partner_connected_wallets_info)
+}
+
 pub fn partners(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("partner").and(
         register_partner(db.clone())
+            .or(get_partner_connected_wallets_info(db.clone()))
             .or(get_partner_connected_wallets(db.clone()))
             .or(get_partner_connected_wallets_exact_date(db.clone()))
             .or(get_partner_connected_wallets_with_deposits_amount(

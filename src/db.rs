@@ -1,10 +1,10 @@
 use crate::{
     config::DatabaseSettings,
     models::db_models::{
-        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, GameInfo, LastBlock,
-        LatestGames, Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerProgram,
-        PartnerSite, Player, PlayerTotals, RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token,
-        TokenPrice, Totals,
+        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
+        GameInfo, LastBlock, LatestGames, Leaderboard, NetworkInfo, Nickname, Partner,
+        PartnerContact, PartnerProgram, PartnerSite, Player, PlayerTotals, RefClicks, RpcUrl,
+        SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
     },
 };
 
@@ -980,6 +980,79 @@ impl DB {
         )
         .fetch_one(&self.db_pool)
         .await
+    }
+
+    pub async fn get_partner_connected_wallets_info(
+        &self,
+        partner: &str,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<Vec<ConnectedWallet>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT * FROM connectedwallets
+                    WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 day'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT * FROM connectedwallets
+                    WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 week'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT * FROM connectedwallets
+                    WHERE partner_id=$1 AND
+                            connectedwallets.timestamp > now() - interval '1 month'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    ConnectedWallet,
+                    r#"
+                    SELECT * FROM connectedwallets
+                    WHERE partner_id=$1
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
+    }
+
+    pub async fn partner_exists(&self, partner: &str) -> Result<bool, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * FROM partner where main_wallet=$1
+            "#,
+            partner
+        )
+        .fetch_optional(&self.db_pool)
+        .await
+        .map(|part| part.is_some())
     }
 
     pub async fn get_partner_connected_wallets_with_deposits_amount(
