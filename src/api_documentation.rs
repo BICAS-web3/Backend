@@ -52,7 +52,8 @@ use warp::{
             handlers::get_partner_clicks,
             handlers::get_partner_connected_wallets,
             handlers::get_partner_connected_wallets_exact_date,
-            handlers::get_partner_connected_wallets_with_deposits_amount
+            handlers::get_partner_connected_wallets_with_deposits_amount,
+            handlers::get_partner_connected_wallets_info
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -98,6 +99,7 @@ use warp::{
             db_models::TimeBoundaries,
             db_models::PlayerTotals,
             db_models::AmountConnectedWallets,
+            db_models::ConnectedWallet,
 
             LeaderboardType
 

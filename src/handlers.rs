@@ -910,7 +910,7 @@ pub mod partner {
     #[utoipa::path(
         tag="partner",
         get,
-        path = "/api/partner/connected/betted/{time_boundaries}",
+        path = "/api/partner/connected_betted/{time_boundaries}",
         responses(
             (status = 200, description = "Connected wallets", body = AmountConnectedWallets),
             (status = 500, description = "Internal server error", body = ErrorText),
@@ -932,6 +932,36 @@ pub mod partner {
         Ok(gen_arbitrary_response(
             ResponseBody::AmountConnectedWallets(connected_wallets),
         ))
+    }
+
+    /// Gets connected wallets
+    ///
+    /// Gets wallets that connected to the partner
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/wallets/{time_boundaries}",
+        responses(
+            (status = 200, description = "Connected wallets", body = ConnectedWallet),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch connected wallets"),
+        ),
+    )]
+    pub async fn get_partner_connected_wallets_info(
+        wallet: String,
+        time_boundaries: TimeBoundaries,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let connected_wallets = db
+            .get_partner_connected_wallets_info(&wallet, time_boundaries)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::ConnectedWallets(
+            connected_wallets,
+        )))
     }
 
     /// Gets amount of connected wallets

@@ -90,6 +90,16 @@ pub mod db_models {
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct ConnectedWallet {
+        pub id: i64,
+        pub address: String,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub sub_id_internal: i64,
+        pub partner_id: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct PartnerSite {
         pub internal_id: i64,
         pub id: i64,
@@ -319,9 +329,9 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
-        NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player, PlayerTotals,
-        RefClicks, RpcUrl, SiteSubId, Token, Totals,
+        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
+        Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player,
+        PlayerTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -375,6 +385,7 @@ pub mod json_responses {
         Leaderboard(Vec<Leaderboard>),
         Clicks(RefClicks),
         AmountConnectedWallets(AmountConnectedWallets),
+        ConnectedWallets(Vec<ConnectedWallet>),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

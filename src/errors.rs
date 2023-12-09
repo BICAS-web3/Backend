@@ -20,6 +20,9 @@ pub enum ApiError {
 
     #[error("The auth signature is too old")]
     OldSignature,
+
+    #[error("The wallet {0} is not registered")]
+    NotRegistered(String),
 }
 
 impl reject::Reject for ApiError {}
