@@ -823,27 +823,27 @@ pub mod partner {
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-        // let sites = db
-        //     .get_partner_sites(&wallet)
-        //     .await
-        //     .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-        //let mut sites_info: Vec<PartnerSiteInfo> = Vec::with_capacity(sites.len());
-        // for site in sites {
-        //     let sub_ids = db
-        //         .get_site_subids(site.internal_id)
-        //         .await
-        //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-        //     sites_info.push(PartnerSiteInfo {
-        //         basic: site,
-        //         sub_ids,
-        //     })
-        // }
+        let sites = db
+            .get_partner_sites(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        let mut sites_info: Vec<PartnerSiteInfo> = Vec::with_capacity(sites.len());
+        for site in sites {
+            let sub_ids = db
+                .get_site_subids(site.internal_id)
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            sites_info.push(PartnerSiteInfo {
+                basic: site,
+                sub_ids,
+            })
+        }
 
         Ok(gen_arbitrary_response(ResponseBody::PartnerInfo(
             PartnerInfo {
                 basic,
                 contacts,
-                //sites: sites_info,
+                sites: sites_info,
             },
         )))
     }
@@ -989,7 +989,11 @@ pub mod partner {
         step: u64,
         db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
-        let mut connected_wallets: Vec<i64> = Vec::with_capacity(((end - begin) / step) as usize);
+        let capacity = ((end - begin) / step) as usize;
+        if capacity > 100 {
+            return Err(reject::custom(ApiError::BadRange));
+        }
+        let mut connected_wallets: Vec<i64> = Vec::with_capacity(capacity);
 
         for start in (begin..end).step_by(step as usize) {
             connected_wallets.push(

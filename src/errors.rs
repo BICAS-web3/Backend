@@ -23,6 +23,9 @@ pub enum ApiError {
 
     #[error("The wallet {0} is not registered")]
     NotRegistered(String),
+
+    #[error("Bad range/step provided")]
+    BadRange,
 }
 
 impl reject::Reject for ApiError {}
