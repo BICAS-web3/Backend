@@ -78,6 +78,7 @@ use warp::{
             json_responses::LatestGames,
             json_responses::PartnerInfo,
             json_responses::PartnerSiteInfo,
+            json_responses::ConnectedWalletsTimeMapped,
 
             db_models::Totals,
             db_models::BetInfo,
