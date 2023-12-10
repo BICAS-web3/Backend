@@ -658,6 +658,7 @@ pub fn get_partner_connected_wallets_exact_date(
         .and_then(with_auth_partner)
         .and(warp::path::param::<u64>())
         .and(warp::path::param::<u64>())
+        .and(warp::path::param::<u64>())
         .and(warp::path::end())
         .and(with_db(db))
         .and_then(handlers::get_partner_connected_wallets_exact_date)

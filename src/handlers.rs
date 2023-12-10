@@ -609,7 +609,7 @@ pub mod abi {
 pub mod partner {
 
     use crate::models::db_models::TimeBoundaries;
-    use crate::models::json_responses::{PartnerInfo, PartnerSiteInfo};
+    use crate::models::json_responses::{ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo};
     use chrono::{TimeZone, Utc};
 
     use super::*;
@@ -971,7 +971,7 @@ pub mod partner {
     #[utoipa::path(
         tag="partner",
         get,
-        path = "/api/partner/connected/{start}/{end}",
+        path = "/api/partner/connected/{start}/{end}/{step}",
         responses(
             (status = 200, description = "Connected wallets", body = AmountConnectedWallets),
             (status = 500, description = "Internal server error", body = ErrorText),
@@ -979,25 +979,35 @@ pub mod partner {
         params(
             ("start" = u64, Path, description = "Starting timestamp for the search"),
             ("end" = u64, Path, description = "Ending timestamp for the search"),
+            ("step" = u64, Path, description = "Step from start to end"),
         ),
     )]
     pub async fn get_partner_connected_wallets_exact_date(
         wallet: String,
         begin: u64,
         end: u64,
+        step: u64,
         db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
-        let connected_wallets = db
-            .get_partner_connected_wallets_amount_exact_date(
-                &wallet,
-                Utc.timestamp_opt(begin as i64, 0).unwrap(),
-                Utc.timestamp_opt(end as i64, 0).unwrap(),
-            )
-            .await
-            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        let mut connected_wallets: Vec<i64> = Vec::with_capacity(((end - begin) / step) as usize);
+
+        for start in (begin..end).step_by(step as usize) {
+            connected_wallets.push(
+                db.get_partner_connected_wallets_amount_exact_date(
+                    &wallet,
+                    Utc.timestamp_opt(start as i64, 0).unwrap(),
+                    Utc.timestamp_opt((start + step) as i64, 0).unwrap(),
+                )
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?
+                .connected_wallets,
+            );
+        }
 
         Ok(gen_arbitrary_response(
-            ResponseBody::AmountConnectedWallets(connected_wallets),
+            ResponseBody::AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped {
+                amount: connected_wallets,
+            }),
         ))
     }
 

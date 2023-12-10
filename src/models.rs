@@ -385,7 +385,13 @@ pub mod json_responses {
         Leaderboard(Vec<Leaderboard>),
         Clicks(RefClicks),
         AmountConnectedWallets(AmountConnectedWallets),
+        AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
         ConnectedWallets(Vec<ConnectedWallet>),
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct ConnectedWalletsTimeMapped {
+        pub amount: Vec<i64>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
