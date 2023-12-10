@@ -989,7 +989,11 @@ pub mod partner {
         step: u64,
         db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
-        let mut connected_wallets: Vec<i64> = Vec::with_capacity(((end - begin) / step) as usize);
+        let capacity = ((end - begin) / step) as usize;
+        if capacity > 100 {
+            return Err(reject::custom(ApiError::BadRange));
+        }
+        let mut connected_wallets: Vec<i64> = Vec::with_capacity(capacity);
 
         for start in (begin..end).step_by(step as usize) {
             connected_wallets.push(
