@@ -973,7 +973,7 @@ pub mod partner {
         get,
         path = "/api/partner/connected/{start}/{end}/{step}",
         responses(
-            (status = 200, description = "Connected wallets", body = AmountConnectedWallets),
+            (status = 200, description = "Connected wallets", body = ConnectedWalletsTimeMapped),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(
