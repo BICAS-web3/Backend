@@ -398,7 +398,7 @@ pub mod json_responses {
     pub struct PartnerInfo {
         pub basic: Partner,
         pub contacts: Vec<PartnerContact>,
-        pub sites: Vec<PartnerSiteInfo>,
+        //pub sites: Vec<PartnerSiteInfo>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

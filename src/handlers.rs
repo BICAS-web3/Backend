@@ -823,27 +823,27 @@ pub mod partner {
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
-        let sites = db
-            .get_partner_sites(&wallet)
-            .await
-            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-        let mut sites_info: Vec<PartnerSiteInfo> = Vec::with_capacity(sites.len());
-        for site in sites {
-            let sub_ids = db
-                .get_site_subids(site.internal_id)
-                .await
-                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
-            sites_info.push(PartnerSiteInfo {
-                basic: site,
-                sub_ids,
-            })
-        }
+        // let sites = db
+        //     .get_partner_sites(&wallet)
+        //     .await
+        //     .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        //let mut sites_info: Vec<PartnerSiteInfo> = Vec::with_capacity(sites.len());
+        // for site in sites {
+        //     let sub_ids = db
+        //         .get_site_subids(site.internal_id)
+        //         .await
+        //         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+        //     sites_info.push(PartnerSiteInfo {
+        //         basic: site,
+        //         sub_ids,
+        //     })
+        // }
 
         Ok(gen_arbitrary_response(ResponseBody::PartnerInfo(
             PartnerInfo {
                 basic,
                 contacts,
-                sites: sites_info,
+                //sites: sites_info,
             },
         )))
     }
