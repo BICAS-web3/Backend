@@ -170,6 +170,11 @@ fn json_body_connect_wallet(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_submit_error(
+) -> impl Filter<Extract = (json_requests::SubmitError,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 // NETWORKS
 pub fn get_networks(
     db: DB,
@@ -730,10 +735,23 @@ pub fn get_leaderboard(
         .and_then(handlers::get_leaderboard)
 }
 
+pub fn submit_error(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("error")
+        .and(json_body_submit_error())
+        .and(with_db(db))
+        .and_then(handlers::submit_error)
+}
+
 pub fn general(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path("general").and(get_totals(db.clone()).or(get_leaderboard(db)))
+    warp::path("general").and(
+        get_totals(db.clone())
+            .or(submit_error(db.clone()))
+            .or(get_leaderboard(db)),
+    )
 }
 
 // pub fn get_full_game(

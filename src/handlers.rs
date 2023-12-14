@@ -14,7 +14,7 @@ use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
     AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ConnectWallet, DeletePartnerContacts,
-    RegisterPartner, SetNickname,
+    RegisterPartner, SetNickname, SubmitError,
 };
 #[allow(unused_imports)]
 use crate::models::json_responses::{
@@ -1163,6 +1163,14 @@ pub mod general {
     use crate::models::{db_models::TimeBoundaries, LeaderboardType};
 
     use super::*;
+
+    pub async fn submit_error(data: SubmitError, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        db.submit_error(&data.error)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Error submitted"))
+    }
 
     /// Get totals
     ///

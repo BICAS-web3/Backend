@@ -607,6 +607,11 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct SubmitError {
+        pub error: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct CreateReferal {
         pub refer_to: String,
         pub referal: String,

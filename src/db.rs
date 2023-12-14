@@ -959,6 +959,18 @@ impl DB {
         .await
     }
 
+    pub async fn submit_error(&self, error: &str) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Error(data) VALUES($1)
+            "#,
+            error
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
     pub async fn get_partner_connected_wallets_amount_exact_date(
         &self,
         partner: &str,

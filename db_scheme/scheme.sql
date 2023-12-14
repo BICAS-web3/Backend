@@ -332,6 +332,12 @@ CREATE TABLE IF NOT EXISTS ConnectedWallets(
 );
 --CREATE UNIQUE INDEX connectedwallets_unique_idx ON ConnectedWallets(sub_id);
 
+CREATE TABLE IF NOT EXISTS Error(
+    id BIGSERIAL PRIMARY KEY,
+    data TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT Now()
+);
+
 -- INITIAL DATA
 
 -- nativecurrency
