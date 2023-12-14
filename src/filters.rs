@@ -739,6 +739,7 @@ pub fn submit_error(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path!("error")
+        .and(warp::post())
         .and(json_body_submit_error())
         .and(with_db(db))
         .and_then(handlers::submit_error)
