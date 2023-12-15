@@ -82,6 +82,8 @@ pub mod db_models {
         pub main_wallet: String,
         pub program: PartnerProgram,
         pub is_verified: bool,
+        pub login: String,
+        pub password: String,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -262,6 +264,14 @@ pub mod db_models {
         pub highest_multiplier: f64,
     }
 
+    #[derive(Deserialize, Serialize, Default, ToSchema)]
+    pub struct PartnerCredentials {
+        pub id: i64,
+        pub login: String,
+        pub password: String,
+        pub partner_id: i64,
+    }
+
     #[serde_as]
     #[derive(Deserialize, Serialize, Clone, Debug)]
     pub struct Bet {
@@ -387,11 +397,20 @@ pub mod json_responses {
         AmountConnectedWallets(AmountConnectedWallets),
         AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
         ConnectedWallets(Vec<ConnectedWallet>),
+        AccessToken(AccessToken),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct ConnectedWalletsTimeMapped {
         pub amount: Vec<i64>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct AccessToken {
+        pub access_token: String,
+        pub token_type: String,
+        pub expires_in: usize,
+        pub refresh_token: String,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
@@ -607,6 +626,12 @@ pub mod json_requests {
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct Login {
+        pub login: String,
+        pub password: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
     pub struct SubmitError {
         pub error: String,
     }
@@ -640,7 +665,8 @@ pub mod json_requests {
         pub traffic_source: String,
         pub users_amount_a_month: i64,
         pub main_wallet: String,
-        pub signature: String,
+        pub login: String,
+        pub password: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

@@ -53,7 +53,8 @@ use warp::{
             handlers::get_partner_connected_wallets,
             handlers::get_partner_connected_wallets_exact_date,
             handlers::get_partner_connected_wallets_with_deposits_amount,
-            handlers::get_partner_connected_wallets_info
+            handlers::get_partner_connected_wallets_info,
+            handlers::login_partner,
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -64,6 +65,7 @@ use warp::{
             json_requests::AddPartnerSite,
             json_requests::AddPartnerSubid,
             json_requests::ConnectWallet,
+            json_requests::Login,
 
             json_responses::JsonResponse,
             json_responses::ResponseBody,
@@ -79,6 +81,7 @@ use warp::{
             json_responses::PartnerInfo,
             json_responses::PartnerSiteInfo,
             json_responses::ConnectedWalletsTimeMapped,
+            json_responses::AccessToken,
 
             db_models::Totals,
             db_models::BetInfo,

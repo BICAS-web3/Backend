@@ -1,4 +1,15 @@
+use blake2::{Blake2b512, Digest};
+use hex::ToHex;
+use jwt::Error as JwtError;
 use web3::signing::{keccak256, recover};
+
+use crate::jwt::{verify_token, Payload};
+
+pub fn blake_hash(message: &str) -> String {
+    let mut hasher = Blake2b512::new();
+    hasher.update(message.as_bytes());
+    hasher.finalize().encode_hex()
+}
 
 pub fn hash_message(message: &str) -> [u8; 32] {
     keccak256(
@@ -34,6 +45,10 @@ pub fn verify_signature(pub_key: &str, message: &str, signature: &str) -> bool {
     let calculated_pubkey = format!("{:02X?}", calculated_pubkey);
 
     pub_key.eq(&calculated_pubkey)
+}
+
+pub fn serialize_token(input: &str, key: &str) -> Result<Payload, JwtError> {
+    verify_token(input, key)
 }
 
 #[cfg(test)]

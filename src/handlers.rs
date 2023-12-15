@@ -14,12 +14,12 @@ use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
     AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ConnectWallet, DeletePartnerContacts,
-    RegisterPartner, SetNickname, SubmitError,
+    Login, RegisterPartner, SetNickname, SubmitError,
 };
 #[allow(unused_imports)]
 use crate::models::json_responses::{
-    Bets, BlockExplorers, ErrorText, InfoText, JsonResponse, NetworkFullInfo, Networks,
-    ResponseBody, Rpcs, Status, TokenPrice, Tokens,
+    AccessToken, Bets, BlockExplorers, ErrorText, InfoText, JsonResponse, NetworkFullInfo,
+    Networks, ResponseBody, Rpcs, Status, TokenPrice, Tokens,
 };
 pub use abi::*;
 pub use bets::*;
@@ -608,9 +608,14 @@ pub mod abi {
 
 pub mod partner {
 
+    use crate::config::PASSWORD_SALT;
+    use crate::jwt;
     use crate::models::db_models::TimeBoundaries;
     use crate::models::json_responses::{ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo};
+    use crate::tools::blake_hash;
+    use blake2::{Blake2b512, Digest};
     use chrono::{TimeZone, Utc};
+    use hex::ToHex;
 
     use super::*;
 
@@ -631,6 +636,13 @@ pub mod partner {
         data: json_requests::RegisterPartner,
         db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
+        let mut hasher = Blake2b512::new();
+
+        hasher.update(data.password.as_bytes());
+
+        let res = hasher.finalize().encode_hex();
+
+        debug!("res {:?}", res);
         db.create_partner(
             Partner {
                 name: data.name,
@@ -640,6 +652,8 @@ pub mod partner {
                 main_wallet: data.main_wallet,
                 program: PartnerProgram::firstMonth,
                 is_verified: false,
+                login: data.login,
+                password: res,
             },
             &[],
         )
@@ -1156,6 +1170,48 @@ pub mod partner {
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
+    }
+
+    /// Login partner
+    ///
+    /// Logins partner with provided login/password
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/login",
+        request_body = Login,
+        responses(
+            (status = 200, description = "Access token", body = AccessToken),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn login_partner(login: Login, db: DB) -> Result<WarpResponse, warp::Rejection> {
+        let hashed_password = blake_hash(&login.password);
+        let partner = db
+            .login_partner(&login.login, &hashed_password)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?
+            .ok_or(reject::custom(ApiError::WrongLoginPassword))?;
+
+        let token = jwt::generate_token(
+            &jwt::Payload {
+                iss: None,
+                sub: partner.login,
+                exp: 100,
+                iat: 100,
+                aud: "".into(),
+            },
+            &format!("{:?}{:?}", *PASSWORD_SALT, hashed_password),
+        );
+
+        Ok(gen_arbitrary_response(ResponseBody::AccessToken(
+            AccessToken {
+                access_token: token.clone(),
+                token_type: "Bearer".into(),
+                expires_in: 100,
+                refresh_token: token,
+            },
+        )))
     }
 }
 

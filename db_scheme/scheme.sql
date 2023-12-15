@@ -277,9 +277,11 @@ CREATE TABLE IF NOT EXISTS Partner(
     country TEXT NOT NULL,
     traffic_source TEXT NOT NULL,
     users_amount_a_month BIGINT NOT NULL,
-    main_wallet TEXT NOT NULL PRIMARY KEY,
+    main_wallet char(42) NOT NULL PRIMARY KEY,
     program PartnerProgram NOT NULL,
-    is_verified boolean NOT NULL
+    is_verified boolean NOT NULL,
+    login varchar(25) UNIQUE,
+    password char(128) NOT NULL,
 );
 
 CREATE TABLE IF NOT EXISTS PartnerContact(

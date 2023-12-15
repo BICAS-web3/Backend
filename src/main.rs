@@ -21,6 +21,7 @@ mod db;
 mod errors;
 mod filters;
 mod handlers;
+mod jwt;
 mod models;
 mod network_handler;
 mod rejection_handler;

@@ -18,14 +18,25 @@ pub enum ApiError {
     #[error("{0}")]
     ArbitraryError(String),
 
-    #[error("The auth signature is too old")]
-    OldSignature,
+    // #[error("The auth signature is too old")]
+    // OldSignature,
 
-    #[error("The wallet {0} is not registered")]
-    NotRegistered(String),
-
+    // #[error("The wallet {0} is not registered")]
+    // NotRegistered(String),
     #[error("Bad range/step provided")]
     BadRange,
+
+    #[error("Wrong login or password")]
+    WrongLoginPassword,
+
+    #[error("No auth header found")]
+    NoAuthError,
+
+    #[error("Invalid authentication header")]
+    InvalidAuthHeaderError,
+
+    #[error("Malformed token")]
+    MalformedToken,
 }
 
 impl reject::Reject for ApiError {}

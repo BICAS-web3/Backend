@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT * FROM partner where main_wallet=$1\n            ",
+  "query": "\n            SELECT * \n            FROM Partner\n            WHERE login=$1\n            LIMIT 1\n            ",
   "describe": {
     "columns": [
       {
@@ -26,7 +26,7 @@
       {
         "ordinal": 4,
         "name": "main_wallet",
-        "type_info": "Text"
+        "type_info": "Bpchar"
       },
       {
         "ordinal": 5,
@@ -52,6 +52,16 @@
         "ordinal": 6,
         "name": "is_verified",
         "type_info": "Bool"
+      },
+      {
+        "ordinal": 7,
+        "name": "login",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 8,
+        "name": "password",
+        "type_info": "Bpchar"
       }
     ],
     "parameters": {
@@ -66,8 +76,10 @@
       false,
       false,
       false,
+      false,
+      true,
       false
     ]
   },
-  "hash": "af4ad828111a26e4847e2fdbd3c98b790b213d56230433ccbc4eda9bbf831ae6"
+  "hash": "9d30e5020e3d2db99326de155dd355d9451c314153bffc736119e70262f01b66"
 }

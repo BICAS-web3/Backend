@@ -634,7 +634,9 @@ impl DB {
                 users_amount_a_month,
                 main_wallet,
                 program,
-                is_verified
+                is_verified,
+                login,
+                password
             ) VALUES (
                 $1,
                 $2,
@@ -642,7 +644,9 @@ impl DB {
                 $4,
                 $5,
                 $6,
-                FALSE
+                FALSE,
+                $7,
+                $8
             )
             "#,
             partner.name,
@@ -650,7 +654,9 @@ impl DB {
             partner.traffic_source,
             partner.users_amount_a_month,
             partner.main_wallet,
-            partner.program as PartnerProgram
+            partner.program as PartnerProgram,
+            partner.login,
+            partner.password
         )
         .execute(&self.db_pool)
         .await?;
@@ -673,6 +679,41 @@ impl DB {
             wallet
         )
         .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn get_partner_by_login(&self, login: &str) -> Result<Partner, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * 
+            FROM Partner
+            WHERE login=$1
+            LIMIT 1
+            "#,
+            login
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn login_partner(
+        &self,
+        login: &str,
+        password: &str,
+    ) -> Result<Option<Partner>, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            Partner,
+            r#"
+            SELECT * 
+            FROM Partner
+            WHERE login=$1 AND password=$2
+            LIMIT 1
+            "#,
+            login,
+            password
+        )
+        .fetch_optional(&self.db_pool)
         .await
     }
 
@@ -1183,18 +1224,18 @@ impl DB {
         }
     }
 
-    pub async fn partner_exists(&self, partner: &str) -> Result<bool, sqlx::Error> {
-        sqlx::query_as_unchecked!(
-            Partner,
-            r#"
-            SELECT * FROM partner where main_wallet=$1
-            "#,
-            partner
-        )
-        .fetch_optional(&self.db_pool)
-        .await
-        .map(|part| part.is_some())
-    }
+    // pub async fn partner_exists(&self, partner: &str) -> Result<bool, sqlx::Error> {
+    //     sqlx::query_as_unchecked!(
+    //         Partner,
+    //         r#"
+    //         SELECT * FROM partner where main_wallet=$1
+    //         "#,
+    //         partner
+    //     )
+    //     .fetch_optional(&self.db_pool)
+    //     .await
+    //     .map(|part| part.is_some())
+    // }
 
     pub async fn get_partner_connected_wallets_with_deposits_amount(
         &self,

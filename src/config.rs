@@ -19,6 +19,7 @@ lazy_static! {
     // other params
     pub static ref PAGE_SIZE: i64 = env::var("PAGE_SIZE").unwrap().parse().unwrap();
     pub static ref ABIS_FOLDER: String = env::var("ABIS_FOLDER").unwrap();
+    pub static ref PASSWORD_SALT: String = env::var("PASSWORD_SALT").unwrap();
 }
 
 #[derive(Debug, Deserialize)]
