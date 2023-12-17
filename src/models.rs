@@ -91,6 +91,11 @@ pub mod db_models {
         pub connected_wallets: i64,
     }
 
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct DepositsSum {
+        pub deposits_sum: i64,
+    }
+
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct ConnectedWallet {
         pub id: i64,
@@ -151,6 +156,17 @@ pub mod db_models {
 
     #[derive(Deserialize, Serialize, ToSchema, Debug)]
     pub struct PlayerTotals {
+        pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
+        pub total_wagered_sum: Option<f64>,
+        pub gross_profit: Option<f64>,
+        pub net_profit: Option<f64>,
+        pub highest_win: Option<f64>,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema, Debug)]
+    pub struct PlayersTotals {
         pub bets_amount: i64,
         pub lost_bets: i64,
         pub won_bets: i64,
@@ -341,7 +357,7 @@ pub mod json_responses {
     use super::db_models::{
         AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
         Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player,
-        PlayerTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals,
+        PlayerTotals, PlayersTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -399,6 +415,7 @@ pub mod json_responses {
         AmountClicksTimeMapped(ClicksTimeMapped),
         ConnectedWallets(Vec<ConnectedWallet>),
         AccessToken(AccessToken),
+        PlayersTotals(PlayersTotals),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

@@ -3,8 +3,8 @@ use crate::{
     models::db_models::{
         AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
         GameInfo, LastBlock, LatestGames, Leaderboard, NetworkInfo, Nickname, Partner,
-        PartnerContact, PartnerProgram, PartnerSite, Player, PlayerTotals, RefClicks, RpcUrl,
-        SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
+        PartnerContact, PartnerProgram, PartnerSite, Player, PlayerTotals, PlayersTotals,
+        RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
     },
 };
 
@@ -568,6 +568,39 @@ impl DB {
               ON bet.token_address = price.address AND bet.player = $1
             "#,
             address
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
+    pub async fn query_players_totals(
+        &self,
+        partner_wallet: &str,
+    ) -> Result<PlayersTotals, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            PlayersTotals,
+            r#"
+            SELECT 
+                    COUNT(bet.id) AS bets_amount,
+                    COUNT(case when bet.wager*bet.bets > bet.profit then 1 else null end) as lost_bets,
+					COUNT(case when bet.wager*bet.bets <= bet.profit then 1 else null end) as won_bets,
+                    SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum,
+					SUM((bet.profit/1000000000000000000)*price.price) as gross_profit,
+					SUM((bet.profit/1000000000000000000)*price.price)-SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as net_profit,
+					MAX((bet.profit/1000000000000000000)*price.price) as highest_win
+            FROM bet 
+			INNER JOIN (SELECT 
+                                token.name AS name,
+                                token.contract_address AS address,
+                                tokenprice.price AS price
+                        FROM token
+                        INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price
+            ON bet.token_address = price.address
+            INNER JOIN ConnectedWallets 
+                ON bet.player=ConnectedWallets.address 
+                    AND ConnectedWallets.partner_id=$1
+            "#,
+            partner_wallet
         )
         .fetch_one(&self.db_pool)
         .await

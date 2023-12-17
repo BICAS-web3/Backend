@@ -610,7 +610,7 @@ pub mod partner {
 
     use crate::config::PASSWORD_SALT;
     use crate::jwt;
-    use crate::models::db_models::TimeBoundaries;
+    use crate::models::db_models::{PlayersTotals, TimeBoundaries};
     use crate::models::json_responses::{
         ClicksTimeMapped, ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo,
     };
@@ -1029,6 +1029,30 @@ pub mod partner {
                 amount: connected_wallets,
             }),
         ))
+    }
+
+    /// Gets totals for the partner
+    ///
+    /// Gets totals on connected wallets
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/connected/totals",
+        responses(
+            (status = 200, description = "Totals", body = PlayersTotals),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn get_connected_totals(
+        wallet: String,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let totals: PlayersTotals = db
+            .query_players_totals(&wallet)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::PlayersTotals(totals)))
     }
 
     /// Gets amount of clicks

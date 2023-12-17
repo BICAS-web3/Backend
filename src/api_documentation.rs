@@ -56,6 +56,7 @@ use warp::{
             handlers::get_partner_connected_wallets_info,
             handlers::login_partner,
             handlers::get_partner_clicks_exact_date,
+            handlers::get_connected_totals,
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -106,6 +107,7 @@ use warp::{
             db_models::PlayerTotals,
             db_models::AmountConnectedWallets,
             db_models::ConnectedWallet,
+            db_models::PlayersTotals,
 
             LeaderboardType
 
