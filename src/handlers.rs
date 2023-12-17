@@ -1038,7 +1038,7 @@ pub mod partner {
     #[utoipa::path(
         tag="partner",
         get,
-        path = "/api/partner/connected/{start}/{end}/{step}",
+        path = "/api/partner/clicks/{start}/{end}/{step}",
         responses(
             (status = 200, description = "Connected wallets", body = ClicksTimeMapped),
             (status = 500, description = "Internal server error", body = ErrorText),
