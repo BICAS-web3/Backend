@@ -599,6 +599,7 @@ impl DB {
             INNER JOIN ConnectedWallets 
                 ON bet.player=ConnectedWallets.address 
                     AND ConnectedWallets.partner_id=$1
+            WHERE bet.profit < (bet.wager*bet.bets)
             "#,
             partner_wallet
         )

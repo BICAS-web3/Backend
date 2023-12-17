@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                    COUNT(bet.id) AS bets_amount,\n                    COUNT(case when bet.wager*bet.bets > bet.profit then 1 else null end) as lost_bets,\n\t\t\t\t\tCOUNT(case when bet.wager*bet.bets <= bet.profit then 1 else null end) as won_bets,\n                    SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as total_wagered_sum,\n\t\t\t\t\tSUM((bet.profit/1000000000000000000)*price.price) as gross_profit,\n\t\t\t\t\tSUM((bet.profit/1000000000000000000)*price.price)-SUM((bet.wager/1000000000000000000)*bet.bets*price.price) as net_profit,\n\t\t\t\t\tMAX((bet.profit/1000000000000000000)*price.price) as highest_win\n            FROM bet \n\t\t\tINNER JOIN (SELECT \n                                token.name AS name,\n                                token.contract_address AS address,\n                                tokenprice.price AS price\n                        FROM token\n                        INNER JOIN tokenprice ON token.name=tokenprice.token_name) AS price\n            ON bet.token_address = price.address\n            INNER JOIN ConnectedWallets \n                ON bet.player=ConnectedWallets.address \n                    AND ConnectedWallets.partner_id=$1\n            WHERE bet.profit < (bet.wager*bet.bets)\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "bets_amount",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "lost_bets",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 2,
+        "name": "won_bets",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 3,
+        "name": "total_wagered_sum",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 4,
+        "name": "gross_profit",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 5,
+        "name": "net_profit",
+        "type_info": "Float8"
+      },
+      {
+        "ordinal": 6,
+        "name": "highest_win",
+        "type_info": "Float8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "af80e1832fe84f2a7aeaca177dad0454bdfe95cfead5723ba8a97c2b347d676a"
+}

@@ -1033,7 +1033,7 @@ pub mod partner {
 
     /// Gets totals for the partner
     ///
-    /// Gets totals on connected wallets
+    /// Gets totals on lost bets of the connected wallets
     #[utoipa::path(
         tag="partner",
         get,
