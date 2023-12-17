@@ -626,6 +626,21 @@ pub fn partner_get_clicks(
         .and_then(handlers::get_partner_clicks)
 }
 
+pub fn get_partner_clicks_exact_date(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("clicks")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(with_auth(db.clone()))
+        .and(warp::path::param::<u64>())
+        .and(warp::path::param::<u64>())
+        .and(warp::path::param::<u64>())
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_partner_clicks_exact_date)
+}
+
 pub fn connect_wallet_subid(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -726,6 +741,7 @@ pub fn partners(
             .or(get_partner_connected_wallets_with_deposits_amount(
                 db.clone(),
             ))
+            .or(get_partner_clicks_exact_date(db.clone()))
             .or(partner_get_clicks(db.clone()))
             .or(get_partner(db.clone()))
             .or(warp::path("contacts").and(

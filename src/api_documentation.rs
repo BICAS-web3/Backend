@@ -55,6 +55,7 @@ use warp::{
             handlers::get_partner_connected_wallets_with_deposits_amount,
             handlers::get_partner_connected_wallets_info,
             handlers::login_partner,
+            handlers::get_partner_clicks_exact_date,
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -81,6 +82,7 @@ use warp::{
             json_responses::PartnerInfo,
             json_responses::PartnerSiteInfo,
             json_responses::ConnectedWalletsTimeMapped,
+            json_responses::ClicksTimeMapped,
             json_responses::AccessToken,
 
             db_models::Totals,

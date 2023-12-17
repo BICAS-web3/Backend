@@ -396,12 +396,18 @@ pub mod json_responses {
         Clicks(RefClicks),
         AmountConnectedWallets(AmountConnectedWallets),
         AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
+        AmountClicksTimeMapped(ClicksTimeMapped),
         ConnectedWallets(Vec<ConnectedWallet>),
         AccessToken(AccessToken),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct ConnectedWalletsTimeMapped {
+        pub amount: Vec<i64>,
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct ClicksTimeMapped {
         pub amount: Vec<i64>,
     }
 

@@ -611,7 +611,9 @@ pub mod partner {
     use crate::config::PASSWORD_SALT;
     use crate::jwt;
     use crate::models::db_models::TimeBoundaries;
-    use crate::models::json_responses::{ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo};
+    use crate::models::json_responses::{
+        ClicksTimeMapped, ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo,
+    };
     use crate::tools::blake_hash;
     use blake2::{Blake2b512, Digest};
     use chrono::{TimeZone, Utc};
@@ -1024,6 +1026,57 @@ pub mod partner {
 
         Ok(gen_arbitrary_response(
             ResponseBody::AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped {
+                amount: connected_wallets,
+            }),
+        ))
+    }
+
+    /// Gets amount of clicks
+    ///
+    /// Gets amount of click for the partner links, within specified time boundaries
+    /// time boundaries are specified as UNIX timestamps un UTC
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/connected/{start}/{end}/{step}",
+        responses(
+            (status = 200, description = "Connected wallets", body = ClicksTimeMapped),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("start" = u64, Path, description = "Starting timestamp for the search"),
+            ("end" = u64, Path, description = "Ending timestamp for the search"),
+            ("step" = u64, Path, description = "Step from start to end"),
+        ),
+    )]
+    pub async fn get_partner_clicks_exact_date(
+        wallet: String,
+        begin: u64,
+        end: u64,
+        step: u64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let capacity = ((end - begin) / step) as usize;
+        if capacity > 100 {
+            return Err(reject::custom(ApiError::BadRange));
+        }
+        let mut connected_wallets: Vec<i64> = Vec::with_capacity(capacity);
+
+        for start in (begin..end).step_by(step as usize) {
+            connected_wallets.push(
+                db.get_partner_clicks_exact_date(
+                    &wallet,
+                    Utc.timestamp_opt(start as i64, 0).unwrap(),
+                    Utc.timestamp_opt((start + step) as i64, 0).unwrap(),
+                )
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?
+                .clicks,
+            );
+        }
+
+        Ok(gen_arbitrary_response(
+            ResponseBody::AmountClicksTimeMapped(ClicksTimeMapped {
                 amount: connected_wallets,
             }),
         ))

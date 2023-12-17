@@ -1,0 +1,24 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                SELECT CAST(COUNT(refclick.id) as BIGINT) as clicks \n                FROM refclick \n                WHERE partner_id=$1 AND\n                    refclick.timestamp >= $2 AND\n                    refclick.timestamp <= $3\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "clicks",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Timestamp",
+        "Timestamp"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "defb95a9027eb3f10d2ec2133981f0c9db68546b7232a5d1333de1d66cf4a857"
+}
