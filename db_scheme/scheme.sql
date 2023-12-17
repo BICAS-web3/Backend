@@ -313,15 +313,16 @@ CREATE TABLE IF NOT EXISTS SiteSubId(
 );
 CREATE UNIQUE INDEX subid_unique_idx ON SiteSubId(id, site_id);
 
-CREATE TABLE IF NOT EXISTS RefClicks(
+CREATE TABLE IF NOT EXISTS RefClick(
     id BIGSERIAL PRIMARY KEY,
-    clicks BIGINT NOT NULL,
+    --clicks BIGINT NOT NULL,
+    timestamp TIMESTAMP NOT NULL,
     
     --sub_id BIGINT NOT NULL,
     sub_id_internal BIGINT NOT NULL REFERENCES SiteSubId(internal_id) ON DELETE CASCADE,
     partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
 );
-CREATE UNIQUE INDEX refclicks_unique_idx ON RefClicks(sub_id_internal, partner_id);
+--CREATE UNIQUE INDEX refclicks_unique_idx ON RefClicks(sub_id_internal, partner_id);
 
 CREATE TABLE IF NOT EXISTS ConnectedWallets(
     id BIGSERIAL PRIMARY KEY,

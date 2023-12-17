@@ -130,10 +130,10 @@ pub mod db_models {
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
     pub struct RefClicks {
-        pub id: i64,
+        //pub id: i64,
         pub clicks: i64,
-        pub sub_id_internal: i64,
-        pub partner_id: String,
+        // pub sub_id_internal: i64,
+        // pub partner_id: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug)]

@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT \n                COUNT(clicks.timestamp) as clicks\n            FROM partnersite\n            INNER JOIN (SELECT * FROM refclick\n                    INNER JOIN sitesubid ON sitesubid.internal_id=refclick.sub_id_internal\n                    WHERE refclick.partner_id=$1) as clicks\n            ON partnersite.internal_id=clicks.site_id\n            WHERE partnersite.id = $2;\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "clicks",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null
+    ]
+  },
+  "hash": "3448ec5c0831454ad26b5b9eea33d135e6664e86beb97fe9afdca43d9f3f5eda"
+}

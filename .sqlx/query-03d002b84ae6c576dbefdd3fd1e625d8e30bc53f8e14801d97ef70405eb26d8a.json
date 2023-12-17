@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO refclick(\n                timestamp,\n                sub_id_internal,\n                partner_id\n            )\n             VALUES (\n                 NOW(), \n                 $1,\n                 $2\n             )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "03d002b84ae6c576dbefdd3fd1e625d8e30bc53f8e14801d97ef70405eb26d8a"
+}

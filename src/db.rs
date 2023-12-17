@@ -932,18 +932,15 @@ impl DB {
             RefClicks,
             r#"
             SELECT 
-                refclicks.id,
-                refclicks.clicks,
-                refclicks.sub_id_internal,
-                refclicks.partner_id
-            FROM refclicks
+                COUNT(refclick.id) as clicks
+            FROM refclick
             INNER JOIN (SELECT 
                 sitesubid.internal_id
             FROM partnersite 
             INNER JOIN sitesubid ON site_id=partnersite.internal_id AND partnersite.partner_id=sitesubid.partner_id
             WHERE partnersite.partner_id=$1 
                         AND partnersite.id=$2 
-                        AND sitesubid.id=$3) AS subids ON subids.internal_id=refclicks.sub_id_internal;
+                        AND sitesubid.id=$3) AS subids ON subids.internal_id=refclick.sub_id_internal;
             "#,
             partner,
             site_id,
@@ -961,14 +958,11 @@ impl DB {
             RefClicks,
             r#"
             SELECT 
-                CAST(0 as bigint) AS id,
-                CAST(COALESCE(SUM(clicks.clicks), 0) as BIGINT) AS clicks,
-                CAST(0 as bigint) AS sub_id_internal,
-                $1 AS partner_id
+                COUNT(clicks.timestamp) as clicks
             FROM partnersite
-            INNER JOIN (SELECT * FROM refclicks
-                    INNER JOIN sitesubid ON sitesubid.internal_id=refclicks.sub_id_internal
-                    WHERE refclicks.partner_id=$1) as clicks
+            INNER JOIN (SELECT * FROM refclick
+                    INNER JOIN sitesubid ON sitesubid.internal_id=refclick.sub_id_internal
+                    WHERE refclick.partner_id=$1) as clicks
             ON partnersite.internal_id=clicks.site_id
             WHERE partnersite.id = $2;
             "#,
@@ -984,15 +978,9 @@ impl DB {
             RefClicks,
             r#"
             SELECT 
-                CAST(0 as bigint) AS id,
-                CAST(COALESCE(SUM(clicks.clicks), 0) as BIGINT) AS clicks,
-                CAST(0 as bigint) AS sub_id_internal,
-                $1 AS partner_id
-            FROM partnersite
-            INNER JOIN (SELECT * FROM refclicks
-                    INNER JOIN sitesubid ON sitesubid.internal_id=refclicks.sub_id_internal
-                    WHERE refclicks.partner_id=$1) as clicks
-            ON partnersite.internal_id=clicks.site_id;
+                COUNT(refclick.id) as clicks
+            FROM refclick
+            WHERE partner_id=$1
             "#,
             partner
         )
@@ -1370,20 +1358,39 @@ impl DB {
     }
 
     pub async fn add_click(&self, partner: &str, sub_id: i64) -> Result<(), sqlx::Error> {
+        // sqlx::query!(
+        //     r#"
+        //     INSERT INTO refclicks(
+        //         clicks,
+        //         sub_id_internal,
+        //         partner_id
+        //     )
+        //      VALUES (
+        //          1,
+        //          $1,
+        //          $2
+        //      )
+        //      ON CONFLICT(sub_id_internal,partner_id) DO UPDATE
+        //      SET clicks = refclicks.clicks+1;
+        //     "#,
+        //     sub_id,
+        //     partner
+        // )
+        // .execute(&self.db_pool)
+        // .await
+        // .map(|_| ())
         sqlx::query!(
             r#"
-            INSERT INTO refclicks(
-                clicks,
+            INSERT INTO refclick(
+                timestamp,
                 sub_id_internal,
                 partner_id
             )
              VALUES (
-                 1, 
+                 NOW(), 
                  $1,
                  $2
              )
-             ON CONFLICT(sub_id_internal,partner_id) DO UPDATE
-             SET clicks = refclicks.clicks+1;
             "#,
             sub_id,
             partner
