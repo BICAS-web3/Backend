@@ -656,6 +656,7 @@ pub mod partner {
                 is_verified: false,
                 login: data.login,
                 password: res,
+                registration_time: Default::default(),
             },
             &[],
         )

@@ -84,6 +84,8 @@ pub mod db_models {
         pub is_verified: bool,
         pub login: String,
         pub password: String,
+        #[serde(with = "ts_seconds")]
+        pub registration_time: DateTime<Utc>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
