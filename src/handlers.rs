@@ -611,6 +611,7 @@ pub mod partner {
     use crate::config::PASSWORD_SALT;
     use crate::jwt;
     use crate::models::db_models::{PlayersTotals, TimeBoundaries};
+    use crate::models::json_requests::WithdrawRequest;
     use crate::models::json_responses::{
         ClicksTimeMapped, ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo,
     };
@@ -694,6 +695,31 @@ pub mod partner {
         )
         .await
         .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Contacts were added"))
+    }
+
+    /// Submits a new withdrawal request
+    ///
+    /// Submits a new withdrawal request
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/withdraw",
+        request_body = WithdrawRequest,
+        responses(
+            (status = 200, description = "Withdraw request was submitted", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn submit_withdrawal(
+        wallet: String,
+        data: WithdrawRequest,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.create_withdraw_request(&wallet, &data)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_info_response("Contacts were added"))
     }

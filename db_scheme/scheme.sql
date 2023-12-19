@@ -334,6 +334,19 @@ CREATE TABLE IF NOT EXISTS ConnectedWallets(
     sub_id_internal BIGINT NOT NULL REFERENCES SiteSubId(internal_id) ON DELETE CASCADE,
     partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS Withdrawal(
+    id BIGSERIAL PRIMARY KEY,
+    start_time TIMESTAMP DEFAULT NOW(),
+
+    token varchar(20) NOT NULL,
+    network varchar(30) NOT NULL,
+    wallet_address varchar(200) NOT NULL,
+    status TEXT DEFAULT 'waiting', --waiting/accepted/rejected,
+    amount TEXT NOT NULL,
+
+    partner_id TEXT NOT NULL REFERENCES Partner(main_wallet) ON DELETE CASCADE
+);
 --CREATE UNIQUE INDEX connectedwallets_unique_idx ON ConnectedWallets(sub_id);
 
 CREATE TABLE IF NOT EXISTS Error(

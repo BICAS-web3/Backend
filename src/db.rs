@@ -6,6 +6,7 @@ use crate::{
         PartnerContact, PartnerProgram, PartnerSite, Player, PlayerTotals, PlayersTotals,
         RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
     },
+    models::json_requests::WithdrawRequest,
 };
 
 use chrono::{DateTime, Utc};
@@ -728,6 +729,38 @@ impl DB {
         )
         .fetch_one(&self.db_pool)
         .await
+    }
+
+    pub async fn create_withdraw_request(
+        &self,
+        wallet: &str,
+        withdraw_request: &WithdrawRequest,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO Withdrawal(
+                token,
+                network,
+                amount,
+                wallet_address,
+                partner_id
+            ) VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                $5
+            )
+            "#,
+            withdraw_request.token,
+            withdraw_request.network,
+            withdraw_request.amount,
+            withdraw_request.wallet_address,
+            wallet
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
     }
 
     pub async fn login_partner(

@@ -244,6 +244,11 @@ fn json_body_submit_error(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_submit_withdrawal(
+) -> impl Filter<Extract = (json_requests::WithdrawRequest,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 // NETWORKS
 pub fn get_networks(
     db: DB,
@@ -740,11 +745,23 @@ pub fn get_partner_connected_wallets_info(
         .and_then(handlers::get_partner_connected_wallets_info)
 }
 
+pub fn submit_partner_withdraw_request(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("withdraw")
+        .and(warp::post())
+        .and(with_auth(db.clone()))
+        .and(json_body_submit_withdrawal())
+        .and(with_db(db))
+        .and_then(handlers::submit_withdrawal)
+}
+
 pub fn partners(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("partner").and(
         register_partner(db.clone())
+            .or(submit_partner_withdraw_request(db.clone()))
             .or(get_conected_totals(db.clone()))
             .or(login_partner(db.clone()))
             .or(get_partner_connected_wallets_info(db.clone()))

@@ -88,6 +88,18 @@ pub mod db_models {
         pub registration_time: DateTime<Utc>,
     }
 
+    #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
+    pub struct Withdrawal {
+        pub id: i64,
+        pub start_time: DateTime<Utc>,
+        pub token: String,
+        pub network: String,
+        pub wallet_address: String,
+        pub status: String,
+        pub partner_id: String,
+        pub amount: String,
+    }
+
     #[derive(Serialize, Deserialize, Clone, ToSchema)]
     pub struct AmountConnectedWallets {
         pub connected_wallets: i64,
@@ -730,5 +742,13 @@ pub mod json_requests {
         pub site_id: i64,
         pub sub_id: i64,
         pub signature: String,
+    }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct WithdrawRequest {
+        pub token: String,
+        pub network: String,
+        pub wallet_address: String,
+        pub amount: String,
     }
 }

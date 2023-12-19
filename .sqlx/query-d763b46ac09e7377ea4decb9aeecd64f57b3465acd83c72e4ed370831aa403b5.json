@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO Withdrawal(\n                token,\n                network,\n                amount,\n                wallet_address,\n                partner_id\n            ) VALUES (\n                $1,\n                $2,\n                $3,\n                $4,\n                $5\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Varchar",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d763b46ac09e7377ea4decb9aeecd64f57b3465acd83c72e4ed370831aa403b5"
+}
