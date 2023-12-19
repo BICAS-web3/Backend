@@ -57,6 +57,7 @@ use warp::{
             handlers::login_partner,
             handlers::get_partner_clicks_exact_date,
             handlers::get_connected_totals,
+            handlers::submit_withdrawal,
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -68,6 +69,7 @@ use warp::{
             json_requests::AddPartnerSubid,
             json_requests::ConnectWallet,
             json_requests::Login,
+            json_requests::WithdrawRequest,
 
             json_responses::JsonResponse,
             json_responses::ResponseBody,
@@ -108,6 +110,7 @@ use warp::{
             db_models::AmountConnectedWallets,
             db_models::ConnectedWallet,
             db_models::PlayersTotals,
+            db_models::Withdrawal,
 
             LeaderboardType
 
