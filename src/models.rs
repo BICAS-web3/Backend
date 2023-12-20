@@ -751,4 +751,10 @@ pub mod json_requests {
         pub wallet_address: String,
         pub amount: String,
     }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct ChangePasswordRequest {
+        pub old_password: String,
+        pub new_password: String,
+    }
 }

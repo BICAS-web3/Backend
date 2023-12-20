@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE Partner\n            SET password=$1\n            WHERE main_wallet=$2 AND password=$3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Bpchar",
+        "Bpchar",
+        "Bpchar"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "d8f579a4c4ee20eec055bb6c7a3160d697dec444e7be83623ca5c2912db29e85"
+}

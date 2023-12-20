@@ -58,6 +58,7 @@ use warp::{
             handlers::get_partner_clicks_exact_date,
             handlers::get_connected_totals,
             handlers::submit_withdrawal,
+            handlers::partner_change_password,
         ),
         components(schemas(
             json_requests::SetNickname,
@@ -70,6 +71,7 @@ use warp::{
             json_requests::ConnectWallet,
             json_requests::Login,
             json_requests::WithdrawRequest,
+            json_requests::ChangePasswordRequest,
 
             json_responses::JsonResponse,
             json_responses::ResponseBody,

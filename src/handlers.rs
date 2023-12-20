@@ -13,8 +13,8 @@ use crate::models::db_models::{
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
-    AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ConnectWallet, DeletePartnerContacts,
-    Login, RegisterPartner, SetNickname, SubmitError,
+    AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ChangePasswordRequest, ConnectWallet,
+    DeletePartnerContacts, Login, RegisterPartner, SetNickname, SubmitError,
 };
 #[allow(unused_imports)]
 use crate::models::json_responses::{
@@ -1274,6 +1274,33 @@ pub mod partner {
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::Clicks(clicks)))
+    }
+
+    /// Change password of the partner
+    ///
+    /// Changes the password of the partner
+    #[utoipa::path(
+        tag="partner",
+        put,
+        path = "/api/partner/change/password",
+        request_body = ChangePasswordRequest,
+        responses(
+            (status = 200, description = "Partner's site clicks", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn partner_change_password(
+        wallet: String,
+        data: ChangePasswordRequest,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let old_hashed = blake_hash(&data.old_password);
+        let new_hashed = blake_hash(&data.new_password);
+        db.partner_change_password(&wallet, &old_hashed, &new_hashed)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Password was changed successfully"))
     }
 
     /// Login partner

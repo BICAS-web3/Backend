@@ -783,6 +783,27 @@ impl DB {
         .await
     }
 
+    pub async fn partner_change_password(
+        &self,
+        wallet: &str,
+        old_password: &str,
+        new_password: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            UPDATE Partner
+            SET password=$1
+            WHERE main_wallet=$2 AND password=$3
+            "#,
+            new_password,
+            wallet,
+            old_password
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
     pub async fn add_partner_contacts(
         &self,
         wallet: &str,

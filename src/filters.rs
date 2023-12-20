@@ -249,6 +249,12 @@ fn json_body_submit_withdrawal(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_change_password(
+) -> impl Filter<Extract = (json_requests::ChangePasswordRequest,), Error = warp::Rejection> + Clone
+{
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 // NETWORKS
 pub fn get_networks(
     db: DB,
@@ -756,11 +762,29 @@ pub fn submit_partner_withdraw_request(
         .and_then(handlers::submit_withdrawal)
 }
 
+pub fn partner_change_password(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("password")
+        .and(warp::put())
+        .and(with_auth(db.clone()))
+        .and(json_body_change_password())
+        .and(with_db(db))
+        .and_then(handlers::partner_change_password)
+}
+
+pub fn partner_change(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("change").and(partner_change_password(db.clone()))
+}
+
 pub fn partners(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("partner").and(
         register_partner(db.clone())
+            .or(partner_change(db.clone()))
             .or(submit_partner_withdraw_request(db.clone()))
             .or(get_conected_totals(db.clone()))
             .or(login_partner(db.clone()))
