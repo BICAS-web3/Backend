@@ -759,4 +759,11 @@ pub mod json_requests {
         pub old_password: String,
         pub new_password: String,
     }
+
+    #[derive(Deserialize, Serialize, ToSchema)]
+    pub struct SubmitQuestion {
+        pub name: String,
+        pub email: String,
+        pub message: String,
+    }
 }

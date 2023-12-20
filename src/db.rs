@@ -783,12 +783,39 @@ impl DB {
         .await
     }
 
+    pub async fn submit_question(
+        &self,
+        name: &str,
+        email: &str,
+        message: &str,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query!(
+            r#"
+            INSERT INTO QuestionRequest(
+                name,
+                email,
+                message
+            ) VALUES (
+                $1,
+                $2,
+                $3
+            )
+            "#,
+            name,
+            email,
+            message
+        )
+        .execute(&self.db_pool)
+        .await
+        .map(|_| ())
+    }
+
     pub async fn partner_change_password(
         &self,
         wallet: &str,
         old_password: &str,
         new_password: &str,
-    ) -> Result<(), sqlx::Error> {
+    ) -> Result<bool, sqlx::Error> {
         sqlx::query!(
             r#"
             UPDATE Partner
@@ -801,7 +828,7 @@ impl DB {
         )
         .execute(&self.db_pool)
         .await
-        .map(|_| ())
+        .map(|r| (r.rows_affected() > 0))
     }
 
     pub async fn add_partner_contacts(

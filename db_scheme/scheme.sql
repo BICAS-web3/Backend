@@ -261,6 +261,14 @@ CREATE UNIQUE INDEX lastblock_unique_idx ON LastBlock(network_id);
 
 -- );
 
+CREATE TABLE IF NOT EXISTS QuestionRequest(
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    submission_time TIMESTAMP DEFAULT Now(),
+    responded BOOLEAN DEFAULT FALSE,
+    message TEXT NOT NULL
+);
+
 CREATE TYPE PartnerProgram AS ENUM(
     'firstMonth',
     'novice',

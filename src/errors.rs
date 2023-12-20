@@ -37,6 +37,9 @@ pub enum ApiError {
 
     #[error("Malformed token")]
     MalformedToken,
+
+    #[error("Bad password")]
+    BadPassword,
 }
 
 impl reject::Reject for ApiError {}

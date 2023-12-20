@@ -14,7 +14,7 @@ use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
 use crate::models::json_requests::{
     AddPartnerContacts, AddPartnerSite, AddPartnerSubid, ChangePasswordRequest, ConnectWallet,
-    DeletePartnerContacts, Login, RegisterPartner, SetNickname, SubmitError,
+    DeletePartnerContacts, Login, RegisterPartner, SetNickname, SubmitError, SubmitQuestion,
 };
 #[allow(unused_imports)]
 use crate::models::json_responses::{
@@ -668,6 +668,30 @@ pub mod partner {
         Ok(gen_info_response("Partner account has been created"))
     }
 
+    /// Submit question
+    ///
+    /// Submits question to be answered later
+    #[utoipa::path(
+        tag="partner",
+        post,
+        path = "/api/partner/question",
+        request_body = SubmitQuestion,
+        responses(
+            (status = 200, description = "Partner account was created", body = InfoText),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+    )]
+    pub async fn submit_question(
+        data: json_requests::SubmitQuestion,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        db.submit_question(&data.name, &data.email, &data.message)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_info_response("Contacts were added"))
+    }
+
     /// Adds contacts to the account
     ///
     /// Adds contact info to the existinf partner account, requires signed signature from the user
@@ -1297,9 +1321,13 @@ pub mod partner {
     ) -> Result<WarpResponse, warp::Rejection> {
         let old_hashed = blake_hash(&data.old_password);
         let new_hashed = blake_hash(&data.new_password);
-        db.partner_change_password(&wallet, &old_hashed, &new_hashed)
+        if !db
+            .partner_change_password(&wallet, &old_hashed, &new_hashed)
             .await
-            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?
+        {
+            return Err(reject::custom(ApiError::BadPassword));
+        }
 
         Ok(gen_info_response("Password was changed successfully"))
     }

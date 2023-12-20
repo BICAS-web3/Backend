@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO QuestionRequest(\n                name,\n                email,\n                message\n            ) VALUES (\n                $1,\n                $2,\n                $3\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "6b95474936168ade076ac4a45d912fbc39ba337117b5cdcedd9711a0292beb1e"
+}

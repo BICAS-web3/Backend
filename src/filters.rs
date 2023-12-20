@@ -255,6 +255,11 @@ fn json_body_change_password(
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
+fn json_body_submit_question(
+) -> impl Filter<Extract = (json_requests::SubmitQuestion,), Error = warp::Rejection> + Clone {
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
 // NETWORKS
 pub fn get_networks(
     db: DB,
@@ -508,6 +513,15 @@ pub fn bets(db: DB) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::
 }
 
 // PARTNERS REFERALS
+pub fn submit_question(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("question")
+        .and(warp::post())
+        .and(json_body_submit_question())
+        .and(with_db(db))
+        .and_then(handlers::submit_question)
+}
 pub fn register_partner(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -784,6 +798,7 @@ pub fn partners(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("partner").and(
         register_partner(db.clone())
+            .or(submit_question(db.clone()))
             .or(partner_change(db.clone()))
             .or(submit_partner_withdraw_request(db.clone()))
             .or(get_conected_totals(db.clone()))
