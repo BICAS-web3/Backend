@@ -282,7 +282,8 @@ CREATE TABLE IF NOT EXISTS Partner(
     is_verified boolean NOT NULL,
     login varchar(25) UNIQUE,
     password char(128) NOT NULL,
-    registration_time TIMESTAMP DEFAULT Now()
+    registration_time TIMESTAMP DEFAULT Now(),
+    language TEXT
 );
 
 CREATE TABLE IF NOT EXISTS PartnerContact(

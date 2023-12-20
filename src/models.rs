@@ -86,6 +86,7 @@ pub mod db_models {
         pub password: String,
         #[serde(with = "ts_seconds")]
         pub registration_time: DateTime<Utc>,
+        pub language: Option<String>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
@@ -704,6 +705,7 @@ pub mod json_requests {
         pub main_wallet: String,
         pub login: String,
         pub password: String,
+        pub language: Option<String>,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]

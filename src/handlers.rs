@@ -658,6 +658,7 @@ pub mod partner {
                 login: data.login,
                 password: res,
                 registration_time: Default::default(),
+                language: data.language,
             },
             &[],
         )

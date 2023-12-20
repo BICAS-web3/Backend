@@ -67,6 +67,11 @@
         "ordinal": 9,
         "name": "registration_time",
         "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "language",
+        "type_info": "Text"
       }
     ],
     "parameters": {
@@ -85,7 +90,8 @@
       false,
       true,
       false,
-      false
+      false,
+      true
     ]
   },
   "hash": "07390d51136ba41cac27e1873d59c471c2d2a26690a8fa37a774f2031a4395f4"
