@@ -4,7 +4,7 @@ use crate::{
         AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
         GameInfo, LastBlock, LatestGames, Leaderboard, NetworkInfo, Nickname, Partner,
         PartnerContact, PartnerProgram, PartnerSite, Player, PlayerTotals, PlayersTotals,
-        RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice, Totals,
+        RefClicks, RpcUrl, SiteSubId, TimeBoundaries, Token, TokenPrice, Totals, Withdrawal,
     },
     models::json_requests::WithdrawRequest,
 };
@@ -761,6 +761,74 @@ impl DB {
         .execute(&self.db_pool)
         .await
         .map(|_| ())
+    }
+
+    pub async fn get_partner_withdrawal_requests(
+        &self,
+        partner: &str,
+        time_boundaries: TimeBoundaries,
+    ) -> Result<Vec<Withdrawal>, sqlx::Error> {
+        match time_boundaries {
+            TimeBoundaries::Daily => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1 AND
+                        start_time > now() - interval '1 day'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Weekly => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1 AND
+                        start_time > now() - interval '1 week'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::Monthly => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1 AND
+                        start_time > now() - interval '1 month'
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+            TimeBoundaries::All => {
+                sqlx::query_as_unchecked!(
+                    Withdrawal,
+                    r#"
+                    SELECT 
+                        *
+                    FROM Withdrawal
+                    WHERE partner_id=$1
+                    "#,
+                    partner
+                )
+                .fetch_all(&self.db_pool)
+                .await
+            }
+        }
     }
 
     pub async fn login_partner(

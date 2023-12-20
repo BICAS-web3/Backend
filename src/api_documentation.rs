@@ -60,6 +60,7 @@ use warp::{
             handlers::submit_withdrawal,
             handlers::partner_change_password,
             handlers::submit_question,
+            handlers::get_withdrawal_requests,
         ),
         components(schemas(
             json_requests::SetNickname,

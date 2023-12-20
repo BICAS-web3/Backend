@@ -372,7 +372,7 @@ pub mod json_responses {
     use super::db_models::{
         AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
         Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player,
-        PlayerTotals, PlayersTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals,
+        PlayerTotals, PlayersTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals, Withdrawal,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -431,6 +431,7 @@ pub mod json_responses {
         ConnectedWallets(Vec<ConnectedWallet>),
         AccessToken(AccessToken),
         PlayersTotals(PlayersTotals),
+        Withdrawals(Vec<Withdrawal>),
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

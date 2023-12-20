@@ -1,0 +1,64 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n                    SELECT \n                        *\n                    FROM Withdrawal\n                    WHERE partner_id=$1 AND\n                        start_time > now() - interval '1 month'\n                    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "start_time",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 2,
+        "name": "token",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "network",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "wallet_address",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "status",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "amount",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "partner_id",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "d7578317d802351741dc38ed1826fece5bfe970606f44705737cb17b6b0d126f"
+}

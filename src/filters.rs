@@ -787,6 +787,18 @@ pub fn partner_change_password(
         .and_then(handlers::partner_change_password)
 }
 
+pub fn partner_get_withdrawals(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path!("withdrawals")
+        .and(warp::get())
+        .and(with_auth(db.clone()))
+        .and(warp::path::param::<TimeBoundaries>())
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_withdrawal_requests)
+}
+
 pub fn partner_change(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -798,6 +810,7 @@ pub fn partners(
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
     warp::path("partner").and(
         register_partner(db.clone())
+            .or(partner_get_withdrawals(db.clone()))
             .or(submit_question(db.clone()))
             .or(partner_change(db.clone()))
             .or(submit_partner_withdraw_request(db.clone()))

@@ -9,6 +9,7 @@ use crate::errors::ApiError;
 #[allow(unused_imports)]
 use crate::models::db_models::{
     GameInfo, Leaderboard, Nickname, Partner, PartnerProgram, Player, PlayerTotals, RefClicks,
+    Withdrawal,
 };
 use crate::models::json_requests::{self, WebsocketsIncommingMessage};
 #[allow(unused_imports)]
@@ -1105,6 +1106,36 @@ pub mod partner {
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
         Ok(gen_arbitrary_response(ResponseBody::PlayersTotals(totals)))
+    }
+
+    /// Gets withdrawal history
+    ///
+    /// Gets withdrawals of the partner
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/withdrawals/{time_boundaries}",
+        responses(
+            (status = 200, description = "Totals", body = WithdrawRequest),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch connected wallets"),
+        ),
+    )]
+    pub async fn get_withdrawal_requests(
+        wallet: String,
+        time_boundaries: TimeBoundaries,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let withdrawals = db
+            .get_partner_withdrawal_requests(&wallet, time_boundaries)
+            .await
+            .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+        Ok(gen_arbitrary_response(ResponseBody::Withdrawals(
+            withdrawals,
+        )))
     }
 
     /// Gets amount of clicks
