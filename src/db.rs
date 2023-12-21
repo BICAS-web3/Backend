@@ -1245,8 +1245,8 @@ impl DB {
                     refclick.timestamp <= $3
             "#,
             partner,
-            start.timestamp_micros(),
-            end.timestamp_micros()
+            start,
+            end
         )
         .fetch_one(&self.db_pool)
         .await
