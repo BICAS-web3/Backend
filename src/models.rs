@@ -128,6 +128,7 @@ pub mod db_models {
         pub name: String,
         pub url: String,
         pub partner_id: String,
+        pub language: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema, Debug, Clone)]
