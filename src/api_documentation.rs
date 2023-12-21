@@ -92,6 +92,7 @@ use warp::{
             json_responses::ConnectedWalletsTimeMapped,
             json_responses::ClicksTimeMapped,
             json_responses::AccessToken,
+            json_responses::ConnectedWalletInfo,
 
             db_models::Totals,
             db_models::BetInfo,
