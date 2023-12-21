@@ -61,6 +61,7 @@ use warp::{
             handlers::partner_change_password,
             handlers::submit_question,
             handlers::get_withdrawal_requests,
+            handlers::get_partner_connected_wallets_betted_exact_date,
         ),
         components(schemas(
             json_requests::SetNickname,

@@ -741,6 +741,21 @@ pub fn get_partner_connected_wallets_exact_date(
         .and_then(handlers::get_partner_connected_wallets_exact_date)
 }
 
+pub fn get_partner_connected_wallets_betted_exact_date(
+    db: DB,
+) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
+    warp::path("connected_betted")
+        .and(warp::get())
+        //.and(json_body_register_partner())
+        .and(with_auth(db.clone()))
+        .and(warp::path::param::<u64>())
+        .and(warp::path::param::<u64>())
+        .and(warp::path::param::<u64>())
+        .and(warp::path::end())
+        .and(with_db(db))
+        .and_then(handlers::get_partner_connected_wallets_betted_exact_date)
+}
+
 pub fn get_conected_totals(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
@@ -819,6 +834,7 @@ pub fn partners(
             .or(get_partner_connected_wallets_info(db.clone()))
             .or(get_partner_connected_wallets(db.clone()))
             .or(get_partner_connected_wallets_exact_date(db.clone()))
+            .or(get_partner_connected_wallets_betted_exact_date(db.clone()))
             .or(get_partner_connected_wallets_with_deposits_amount(
                 db.clone(),
             ))

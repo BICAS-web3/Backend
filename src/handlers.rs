@@ -1110,6 +1110,57 @@ pub mod partner {
         ))
     }
 
+    /// Gets amount of connected wallets with bets
+    ///
+    /// Gets amount of wallets that connected to the partner and made at least one bet, withing specified time boundaries
+    /// time boundaries are specified as UNIX timestamps un UTC
+    #[utoipa::path(
+        tag="partner",
+        get,
+        path = "/api/partner/connected_betted/betted/{start}/{end}/{step}",
+        responses(
+            (status = 200, description = "Connected wallets", body = ConnectedWalletsTimeMapped),
+            (status = 500, description = "Internal server error", body = ErrorText),
+        ),
+        params(
+            ("start" = u64, Path, description = "Starting timestamp for the search"),
+            ("end" = u64, Path, description = "Ending timestamp for the search"),
+            ("step" = u64, Path, description = "Step from start to end"),
+        ),
+    )]
+    pub async fn get_partner_connected_wallets_betted_exact_date(
+        wallet: String,
+        begin: u64,
+        end: u64,
+        step: u64,
+        db: DB,
+    ) -> Result<WarpResponse, warp::Rejection> {
+        let capacity = ((end - begin) / step) as usize;
+        if capacity > 100 {
+            return Err(reject::custom(ApiError::BadRange));
+        }
+        let mut connected_wallets: Vec<i64> = Vec::with_capacity(capacity);
+
+        for start in (begin..end).step_by(step as usize) {
+            connected_wallets.push(
+                db.get_partner_connected_wallets_with_bets_amount_exact_date(
+                    &wallet,
+                    Utc.timestamp_opt(start as i64, 0).unwrap(),
+                    Utc.timestamp_opt((start + step) as i64, 0).unwrap(),
+                )
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?
+                .connected_wallets,
+            );
+        }
+
+        Ok(gen_arbitrary_response(
+            ResponseBody::AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped {
+                amount: connected_wallets,
+            }),
+        ))
+    }
+
     /// Gets totals for the partner
     ///
     /// Gets totals on lost bets of the connected wallets
@@ -1146,7 +1197,7 @@ pub mod partner {
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(
-            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch connected wallets"),
+            ("time_boundaries" = TimeBoundaries, Path, description = "Time boundaries in which to fetch withdrawal requests"),
         ),
     )]
     pub async fn get_withdrawal_requests(
@@ -1173,7 +1224,7 @@ pub mod partner {
         get,
         path = "/api/partner/clicks/{start}/{end}/{step}",
         responses(
-            (status = 200, description = "Connected wallets", body = ClicksTimeMapped),
+            (status = 200, description = "Clicks", body = ClicksTimeMapped),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(

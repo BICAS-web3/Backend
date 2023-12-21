@@ -1205,6 +1205,30 @@ impl DB {
         .await
     }
 
+    pub async fn get_partner_connected_wallets_with_bets_amount_exact_date(
+        &self,
+        partner: &str,
+        start: chrono::DateTime<chrono::Utc>,
+        end: chrono::DateTime<chrono::Utc>,
+    ) -> Result<AmountConnectedWallets, sqlx::Error> {
+        sqlx::query_as_unchecked!(
+            AmountConnectedWallets,
+            r#"
+                SELECT CAST(COUNT(DISTINCT connectedwallets.address) as BIGINT) as connected_wallets 
+                FROM connectedwallets
+                INNER JOIN bet ON connectedwallets.address=bet.player
+                WHERE partner_id=$1 AND
+                    connectedwallets.timestamp >= $2 AND
+                    connectedwallets.timestamp <= $3
+            "#,
+            partner,
+            start,
+            end
+        )
+        .fetch_one(&self.db_pool)
+        .await
+    }
+
     pub async fn get_partner_clicks_exact_date(
         &self,
         partner: &str,
@@ -1221,8 +1245,8 @@ impl DB {
                     refclick.timestamp <= $3
             "#,
             partner,
-            start,
-            end
+            start.timestamp_micros(),
+            end.timestamp_micros()
         )
         .fetch_one(&self.db_pool)
         .await
