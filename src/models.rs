@@ -370,9 +370,9 @@ pub mod db_models {
 pub mod json_responses {
 
     use super::db_models::{
-        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, ConnectedWallet, Game, GameAbi,
-        Leaderboard, NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player,
-        PlayerTotals, PlayersTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals, Withdrawal,
+        AmountConnectedWallets, Bet, BetInfo, BlockExplorerUrl, Game, GameAbi, Leaderboard,
+        NetworkInfo, Nickname, Partner, PartnerContact, PartnerSite, Player, PlayerTotals,
+        PlayersTotals, RefClicks, RpcUrl, SiteSubId, Token, Totals, Withdrawal,
     };
     use super::*;
     use chrono::serde::ts_seconds;
@@ -428,10 +428,27 @@ pub mod json_responses {
         AmountConnectedWallets(AmountConnectedWallets),
         AmountConnectedWalletsTimeMapped(ConnectedWalletsTimeMapped),
         AmountClicksTimeMapped(ClicksTimeMapped),
-        ConnectedWallets(Vec<ConnectedWallet>),
+        ConnectedWallets(Vec<ConnectedWalletInfo>),
         AccessToken(AccessToken),
         PlayersTotals(PlayersTotals),
         Withdrawals(Vec<Withdrawal>),
+    }
+
+    #[derive(Serialize, Deserialize, Clone, ToSchema)]
+    pub struct ConnectedWalletInfo {
+        pub id: i64,
+        pub address: String,
+        #[serde(with = "ts_seconds")]
+        pub timestamp: DateTime<Utc>,
+        pub site_id: i64,
+        pub sub_id: i64,
+        pub bets_amount: i64,
+        pub lost_bets: i64,
+        pub won_bets: i64,
+        pub total_wagered_sum: Option<f64>,
+        pub gross_profit: Option<f64>,
+        pub net_profit: Option<f64>,
+        pub highest_win: Option<f64>,
     }
 
     #[derive(Serialize, Deserialize, Clone, ToSchema)]

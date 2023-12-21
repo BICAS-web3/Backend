@@ -614,7 +614,8 @@ pub mod partner {
     use crate::models::db_models::{PlayersTotals, TimeBoundaries};
     use crate::models::json_requests::WithdrawRequest;
     use crate::models::json_responses::{
-        ClicksTimeMapped, ConnectedWalletsTimeMapped, PartnerInfo, PartnerSiteInfo,
+        ClicksTimeMapped, ConnectedWalletInfo, ConnectedWalletsTimeMapped, PartnerInfo,
+        PartnerSiteInfo,
     };
     use crate::tools::blake_hash;
     use blake2::{Blake2b512, Digest};
@@ -1011,7 +1012,7 @@ pub mod partner {
         get,
         path = "/api/partner/wallets/{time_boundaries}",
         responses(
-            (status = 200, description = "Connected wallets", body = ConnectedWallet),
+            (status = 200, description = "Connected wallets", body = ConnectedWalletInfo),
             (status = 500, description = "Internal server error", body = ErrorText),
         ),
         params(
@@ -1028,8 +1029,33 @@ pub mod partner {
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
+        let mut connected_wallets_stats: Vec<ConnectedWalletInfo> =
+            Vec::with_capacity(connected_wallets.len());
+
+        for wallet in connected_wallets {
+            let stats = db
+                .query_player_totals(&wallet.address)
+                .await
+                .map_err(|e| reject::custom(ApiError::DbError(e)))?;
+
+            connected_wallets_stats.push(ConnectedWalletInfo {
+                id: wallet.id,
+                address: wallet.address,
+                timestamp: wallet.timestamp,
+                site_id: wallet.site_id,
+                sub_id: wallet.sub_id,
+                bets_amount: stats.bets_amount,
+                lost_bets: stats.lost_bets,
+                won_bets: stats.won_bets,
+                total_wagered_sum: stats.total_wagered_sum,
+                gross_profit: stats.gross_profit,
+                net_profit: stats.net_profit,
+                highest_win: stats.highest_win,
+            });
+        }
+
         Ok(gen_arbitrary_response(ResponseBody::ConnectedWallets(
-            connected_wallets,
+            connected_wallets_stats,
         )))
     }
 
