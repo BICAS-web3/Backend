@@ -805,7 +805,7 @@ pub fn partner_change_password(
 pub fn partner_get_withdrawals(
     db: DB,
 ) -> impl Filter<Extract = (impl warp::Reply,), Error = warp::Rejection> + Clone {
-    warp::path!("withdrawals")
+    warp::path("withdrawals")
         .and(warp::get())
         .and(with_auth(db.clone()))
         .and(warp::path::param::<TimeBoundaries>())
