@@ -747,6 +747,7 @@ pub mod json_requests {
     pub struct AddPartnerSite {
         pub name: String,
         pub url: String,
+        pub language: String,
     }
 
     #[derive(Deserialize, Serialize, ToSchema)]
