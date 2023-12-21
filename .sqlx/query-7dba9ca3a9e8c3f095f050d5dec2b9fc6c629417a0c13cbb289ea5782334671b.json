@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            INSERT INTO PartnerSite(\n                id,\n                name,\n                url,\n                partner_id,\n                language\n            ) \n            SELECT \n                COALESCE(MAX(id)+1,0),\n                $1,\n                $2,\n                $3,\n                $4\n            FROM PartnerSite\n            WHERE partner_id=$3\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Text",
+        "Text"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "7dba9ca3a9e8c3f095f050d5dec2b9fc6c629417a0c13cbb289ea5782334671b"
+}

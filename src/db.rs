@@ -970,6 +970,7 @@ impl DB {
         wallet: &str,
         url: &str,
         name: &str,
+        language: &str,
     ) -> Result<(), sqlx::Error> {
         sqlx::query!(
             r#"
@@ -977,19 +978,22 @@ impl DB {
                 id,
                 name,
                 url,
-                partner_id
+                partner_id,
+                language
             ) 
             SELECT 
                 COALESCE(MAX(id)+1,0),
                 $1,
                 $2,
-                $3
+                $3,
+                $4
             FROM PartnerSite
             WHERE partner_id=$3
             "#,
             name,
             url,
-            wallet
+            wallet,
+            language
         )
         .execute(&self.db_pool)
         .await

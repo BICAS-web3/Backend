@@ -769,7 +769,7 @@ pub mod partner {
         data: json_requests::AddPartnerSite,
         db: DB,
     ) -> Result<WarpResponse, warp::Rejection> {
-        db.add_partner_site(&wallet, &data.url, &data.name)
+        db.add_partner_site(&wallet, &data.url, &data.name, &data.language)
             .await
             .map_err(|e| reject::custom(ApiError::DbError(e)))?;
 
